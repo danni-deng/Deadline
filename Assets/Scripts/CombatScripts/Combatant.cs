@@ -11,6 +11,7 @@ public class Combatant : MonoBehaviour
     public bool isPlayerSide;
     public int currentHP;
     public int healsLeft;
+    public float hideDelay = 0.4f;
 
     public bool IsAlive
     {
@@ -51,7 +52,7 @@ public class Combatant : MonoBehaviour
             AnyDied?.Invoke(this);
             if (!isPlayerSide)
             {
-                gameObject.SetActive(false);
+                Invoke("Hide", hideDelay);
             }
         }
     }
@@ -62,5 +63,10 @@ public class Combatant : MonoBehaviour
         currentHP = Mathf.Min(data.maxHP, currentHP + data.healAmount);
         healsLeft--;
         AnyHealed?.Invoke(this, currentHP - before);
+    }
+
+    void Hide()
+    {
+        gameObject.SetActive(false);
     }
 }
