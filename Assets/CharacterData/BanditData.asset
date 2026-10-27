@@ -10,11 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c70e618533d8db1479e6c4568f87670d, type: 3}
-  m_Name: PlayerData
+  m_Name: BanditData
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
   displayName: 
-  maxHP: 20
-  attack: 6
-  speed: 5
-  healAmount: 8
-  maxHeals: 3
+  maxHP: 12
+  attack: 3
+  defense: 0
+  speed: 4
+  healAmount: 0
+  maxHeals: 0
+  bulletColorA: 0
+  bulletColorB: 1
+  startingBullets: 40
+  startingColors: 00000000
+  abilities: []
