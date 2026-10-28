@@ -2,16 +2,33 @@ using UnityEngine;
 
 public class colorChanger : MonoBehaviour
 {
-
+    public BattleManager battleManager;
     public Sprite[] sprites = new Sprite[3];
     int colorSelected = 0;
-    string[] colorName = new string[3];
-    
+    string[] colorName = new string[] { "red", "yellow", "blue" };
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    void OnEnable()
     {
-        colorName = new string[] { "red", "yellow", "blue" };
+        if (battleManager != null)
+        {
+            battleManager.TurnStarted += OnTurnStarted;
+        }
+    }
+
+    void OnDisable()
+    {
+        if (battleManager != null)
+        {
+            battleManager.TurnStarted -= OnTurnStarted;
+        }
+    }
+
+    void OnTurnStarted(Combatant c)
+    {
+        if (c.isPlayerSide)
+        {
+            colorSelected = (int)c.data.bulletColorA;
+        }
     }
 
     public string getColor()
@@ -19,19 +36,48 @@ public class colorChanger : MonoBehaviour
         return colorName[colorSelected];
     }
 
-    // Update is called once per frame
+    public void SwitchBullet()
+    {
+        Combatant user = null;
+        if (battleManager != null)
+        {
+            user = battleManager.ActiveCombatant;
+        }
+
+        if (user != null && user.isPlayerSide)
+        {
+            if (colorSelected == (int)user.data.bulletColorA)
+            {
+                colorSelected = (int)user.data.bulletColorB;
+            }
+            else
+            {
+                colorSelected = (int)user.data.bulletColorA;
+            }
+        }
+        else
+        {
+            colorSelected = (colorSelected + 1) % 3;
+        }
+
+        AudioSource sound = GetComponent<AudioSource>();
+        if (sound != null)
+        {
+            sound.Play();
+        }
+    }
+
     void Update()
     {
-        GetComponent<SpriteRenderer>().sprite = sprites[colorSelected];
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null && colorSelected < sprites.Length)
+        {
+            sr.sprite = sprites[colorSelected];
+        }
 
         if (Input.GetKeyDown(KeyCode.LeftShift))
         {
-            GetComponent<AudioSource>().Play();
-            colorSelected++;
-        }
-        if(colorSelected > 2)
-        {
-            colorSelected = 0;
+            SwitchBullet();
         }
     }
 }
