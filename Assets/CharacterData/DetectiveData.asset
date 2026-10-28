@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: DetectiveData
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
   displayName: Detective
-  maxHP: 20
-  attack: 6
+  maxHP: 16
+  attack: 9
   defense: 0
-  speed: 5
+  speed: 7
   healAmount: 0
   maxHeals: 0
   bulletColorA: 0
