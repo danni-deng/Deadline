@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d8015c8a02625f48919663a514aa15b, type: 3}
   m_Name: DocumentLeak
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
-  abilityName: DocumentLeak
+  abilityName: Money Laundering
   target: 2
   cooldown: 2
   anyColor: 0
@@ -29,6 +29,7 @@ MonoBehaviour:
     regenTurns: 0
     attackBoost: 0
     defenseBoost: 0
+    speedBoost: 0
     buffTurns: 0
     defenseDropChance: 0
     defenseDropPercent: 0.2
@@ -50,13 +51,14 @@ MonoBehaviour:
     regenTurns: 0
     attackBoost: 0
     defenseBoost: 0
+    speedBoost: 0
     buffTurns: 0
     defenseDropChance: 0
     defenseDropPercent: 0.2
     defenseDropTurns: 2
     cooldownReduction: 2
     resetShortestCooldown: 0
-    grantStack: 0
+    grantStack: 1
     stackColor: 0
     hitAllAllies: 0
     extraTurn: 0
@@ -71,13 +73,14 @@ MonoBehaviour:
     regenTurns: 0
     attackBoost: 0
     defenseBoost: 0
+    speedBoost: 0
     buffTurns: 0
     defenseDropChance: 0
     defenseDropPercent: 0.2
     defenseDropTurns: 2
     cooldownReduction: 2
     resetShortestCooldown: 0
-    grantStack: 0
+    grantStack: 1
     stackColor: 0
     hitAllAllies: 0
     extraTurn: 0
@@ -92,13 +95,14 @@ MonoBehaviour:
     regenTurns: 0
     attackBoost: 0
     defenseBoost: 0
+    speedBoost: 0
     buffTurns: 0
     defenseDropChance: 0
     defenseDropPercent: 0.2
     defenseDropTurns: 2
     cooldownReduction: 2
     resetShortestCooldown: 0
-    grantStack: 0
+    grantStack: 1
     stackColor: 0
     hitAllAllies: 0
     extraTurn: 1

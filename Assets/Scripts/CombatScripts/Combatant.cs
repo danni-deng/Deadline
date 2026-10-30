@@ -7,7 +7,8 @@ public enum StatusType
     AttackUp,
     DefenseUp,
     DefenseDown,
-    Regen
+    Regen,
+    SpeedUp
 }
 
 [Serializable]
@@ -47,7 +48,7 @@ public class Combatant : MonoBehaviour
 
     public int Speed
     {
-        get { return data.speed; }
+        get { return Mathf.Max(1, Mathf.RoundToInt(data.speed * (1f + SumEffects(StatusType.SpeedUp)))); }
     }
 
     public bool CanHeal

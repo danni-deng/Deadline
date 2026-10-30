@@ -22,6 +22,7 @@ public class AbilityTier
     public int regenTurns;
     public float attackBoost;
     public float defenseBoost;
+    public float speedBoost;
     public int buffTurns;
     public float defenseDropChance;
     public float defenseDropPercent = 0.2f;

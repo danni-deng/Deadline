@@ -45,6 +45,8 @@ public class BattleManager : MonoBehaviour
     int submittedAbility;
     Combatant submittedTarget;
     Coroutine battleRoutine;
+    List<Combatant> roundOrder = new List<Combatant>();
+    int roundIndex;
 
     void Start()
     {
@@ -86,10 +88,13 @@ public class BattleManager : MonoBehaviour
                 yield break;
             }
 
-            List<Combatant> order = BuildTurnOrder();
+            roundOrder = BuildTurnOrder();
 
-            foreach (Combatant c in order)
+            for (int i = 0; i < roundOrder.Count; i++)
             {
+                Combatant c = roundOrder[i];
+                roundIndex = i;
+
                 if (!c.IsAlive)
                 {
                     continue;
@@ -151,36 +156,73 @@ public class BattleManager : MonoBehaviour
     {
         List<Combatant> order = new List<Combatant>();
 
-        foreach (Combatant c in party)
-        {
-            if (c.IsAlive)
-            {
-                order.Add(c);
-            }
-        }
-        foreach (Combatant c in enemies)
-        {
-            if (c.IsAlive)
-            {
-                order.Add(c);
-            }
-        }
+        AddToOrder(order, party);
+        AddToOrder(order, enemies);
 
-        order.Sort(CompareTurnOrder);
         return order;
     }
 
-    int CompareTurnOrder(Combatant a, Combatant b)
+    void AddToOrder(List<Combatant> order, List<Combatant> source)
+    {
+        foreach (Combatant c in source)
+        {
+            if (c == null || !c.IsAlive)
+            {
+                continue;
+            }
+
+            int position = order.Count;
+            while (position > 0 && GoesBefore(c, order[position - 1]))
+            {
+                position--;
+            }
+            order.Insert(position, c);
+        }
+    }
+
+    bool GoesBefore(Combatant a, Combatant b)
     {
         if (a.Speed != b.Speed)
         {
-            return b.Speed.CompareTo(a.Speed);
+            return a.Speed > b.Speed;
         }
-        if (a.isPlayerSide != b.isPlayerSide)
+        return a.isPlayerSide && !b.isPlayerSide;
+    }
+
+    public List<Combatant> GetUpcomingTurns(int count)
+    {
+        List<Combatant> result = new List<Combatant>();
+
+        if (ActiveCombatant != null && ActiveCombatant.IsAlive)
         {
-            return a.isPlayerSide ? -1 : 1;
+            result.Add(ActiveCombatant);
         }
-        return 0;
+
+        for (int i = roundIndex + 1; i < roundOrder.Count && result.Count < count; i++)
+        {
+            if (roundOrder[i] != null && roundOrder[i].IsAlive)
+            {
+                result.Add(roundOrder[i]);
+            }
+        }
+
+        List<Combatant> next = BuildTurnOrder();
+        int safety = 0;
+
+        while (result.Count < count && next.Count > 0 && safety < 50)
+        {
+            foreach (Combatant c in next)
+            {
+                if (result.Count >= count)
+                {
+                    break;
+                }
+                result.Add(c);
+            }
+            safety++;
+        }
+
+        return result;
     }
 
     List<Combatant> GetAlive(List<Combatant> list)
@@ -384,6 +426,10 @@ public class BattleManager : MonoBehaviour
             if (tier.defenseBoost > 0f)
             {
                 t.AddStatus(StatusType.DefenseUp, tier.defenseBoost, tier.buffTurns, onOwnTurn);
+            }
+            if (tier.speedBoost > 0f)
+            {
+                t.AddStatus(StatusType.SpeedUp, tier.speedBoost, tier.buffTurns, onOwnTurn);
             }
         }
 

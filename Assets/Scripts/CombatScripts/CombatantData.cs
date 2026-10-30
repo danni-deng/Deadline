@@ -5,6 +5,7 @@ using UnityEngine;
 public class CombatantData : ScriptableObject
 {
     public string displayName;
+    public Sprite portrait;
     public int maxHP = 20;
     public int attack = 6;
     public int defense = 0;
