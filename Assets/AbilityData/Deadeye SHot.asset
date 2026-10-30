@@ -1,0 +1,104 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d8015c8a02625f48919663a514aa15b, type: 3}
+  m_Name: Deadeye SHot
+  m_EditorClassIdentifier: Assembly-CSharp::AbilityData
+  abilityName: Deadeye Shot
+  target: 0
+  cooldown: 2
+  anyColor: 0
+  stackColors: 0000000001000000
+  tiers:
+  - note: Tier 0
+    damagePower: 1.5
+    critChance: 0.2
+    critMultiplier: 2.5
+    missingHpBonus: 0
+    selfDamagePercent: 0
+    healPercent: 0
+    regenPercent: 0
+    regenTurns: 0
+    attackBoost: 0
+    defenseBoost: 0
+    buffTurns: 0
+    defenseDropChance: 0
+    defenseDropPercent: 0.2
+    defenseDropTurns: 2
+    cooldownReduction: 0
+    resetShortestCooldown: 0
+    grantStack: 0
+    stackColor: 0
+    hitAllAllies: 0
+    extraTurn: 0
+  - note: Tier 1
+    damagePower: 2.2
+    critChance: 0.2
+    critMultiplier: 2.5
+    missingHpBonus: 0
+    selfDamagePercent: 0
+    healPercent: 0
+    regenPercent: 0
+    regenTurns: 0
+    attackBoost: 0
+    defenseBoost: 0
+    buffTurns: 0
+    defenseDropChance: 0
+    defenseDropPercent: 0.2
+    defenseDropTurns: 2
+    cooldownReduction: 0
+    resetShortestCooldown: 0
+    grantStack: 0
+    stackColor: 0
+    hitAllAllies: 0
+    extraTurn: 0
+  - note: Tier 2
+    damagePower: 0
+    critChance: 0
+    critMultiplier: 2.5
+    missingHpBonus: 0
+    selfDamagePercent: 0
+    healPercent: 0
+    regenPercent: 0
+    regenTurns: 0
+    attackBoost: 0
+    defenseBoost: 0
+    buffTurns: 0
+    defenseDropChance: 0
+    defenseDropPercent: 0.2
+    defenseDropTurns: 2
+    cooldownReduction: 0
+    resetShortestCooldown: 0
+    grantStack: 0
+    stackColor: 0
+    hitAllAllies: 0
+    extraTurn: 0
+  - note: Tier 3
+    damagePower: 2.2
+    critChance: 0.4
+    critMultiplier: 2.5
+    missingHpBonus: 0.25
+    selfDamagePercent: 0
+    healPercent: 0
+    regenPercent: 0
+    regenTurns: 0
+    attackBoost: 0
+    defenseBoost: 0
+    buffTurns: 0
+    defenseDropChance: 0
+    defenseDropPercent: 0.2
+    defenseDropTurns: 2
+    cooldownReduction: 0
+    resetShortestCooldown: 0
+    grantStack: 0
+    stackColor: 0
+    hitAllAllies: 0
+    extraTurn: 0
