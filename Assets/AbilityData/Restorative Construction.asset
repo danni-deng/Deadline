@@ -13,20 +13,20 @@ MonoBehaviour:
   m_Name: Restorative Construction
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
   abilityName: Restorative Construction
-  target: 0
-  cooldown: 2
-  anyColor: 0
+  target: 2
+  cooldown: 3
+  anyColor: 1
   stackColors: 
   tiers:
-  - note: 
+  - note: Tier 0
     damagePower: 0
     critChance: 0
     critMultiplier: 2.5
     missingHpBonus: 0
     selfDamagePercent: 0
-    healPercent: 0
-    regenPercent: 0
-    regenTurns: 0
+    healPercent: 0.6
+    regenPercent: 0.1
+    regenTurns: 3
     attackBoost: 0
     defenseBoost: 0
     speedBoost: 0
@@ -40,15 +40,15 @@ MonoBehaviour:
     stackColor: 0
     hitAllAllies: 0
     extraTurn: 0
-  - note: 
+  - note: Tier 1
     damagePower: 0
     critChance: 0
     critMultiplier: 2.5
     missingHpBonus: 0
     selfDamagePercent: 0
-    healPercent: 0
-    regenPercent: 0
-    regenTurns: 0
+    healPercent: 0.75
+    regenPercent: 0.1
+    regenTurns: 3
     attackBoost: 0
     defenseBoost: 0
     speedBoost: 0
@@ -62,15 +62,15 @@ MonoBehaviour:
     stackColor: 0
     hitAllAllies: 0
     extraTurn: 0
-  - note: 
+  - note: Tier 2
     damagePower: 0
     critChance: 0
     critMultiplier: 2.5
     missingHpBonus: 0
     selfDamagePercent: 0
-    healPercent: 0
-    regenPercent: 0
-    regenTurns: 0
+    healPercent: 1
+    regenPercent: 0.2
+    regenTurns: 3
     attackBoost: 0
     defenseBoost: 0
     speedBoost: 0
@@ -84,19 +84,19 @@ MonoBehaviour:
     stackColor: 0
     hitAllAllies: 0
     extraTurn: 0
-  - note: 
+  - note: Tier 3
     damagePower: 0
     critChance: 0
     critMultiplier: 2.5
     missingHpBonus: 0
     selfDamagePercent: 0
-    healPercent: 0
-    regenPercent: 0
-    regenTurns: 0
+    healPercent: 1
+    regenPercent: 0.2
+    regenTurns: 3
     attackBoost: 0
-    defenseBoost: 0
+    defenseBoost: 0.25
     speedBoost: 0
-    buffTurns: 0
+    buffTurns: 2
     defenseDropChance: 0
     defenseDropPercent: 0.2
     defenseDropTurns: 2

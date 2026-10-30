@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: BanditData
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
   displayName: 
+  portrait: {fileID: 0}
   maxHP: 12
   attack: 3
   defense: 0
@@ -22,5 +23,5 @@ MonoBehaviour:
   bulletColorA: 0
   bulletColorB: 1
   startingBullets: 40
-  startingColors: 00000000
+  startingColors: 
   abilities: []

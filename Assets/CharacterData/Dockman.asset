@@ -25,5 +25,5 @@ MonoBehaviour:
   startingBullets: 40
   startingColors: 
   abilities:
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 1b51e63de57403749944d2f0c43d8dab, type: 2}
+  - {fileID: 11400000, guid: 7c805aaabc9a2f046a5096c5588ef8a1, type: 2}

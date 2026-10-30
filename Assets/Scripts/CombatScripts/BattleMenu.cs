@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,6 +9,7 @@ public class BattleMenu : MonoBehaviour
     public BattleManager battleManager;
     public CanvasGroup menuGroup;
     public Button attackButton;
+    public Button colorStrikeButton;
     public Button ability1Button;
     public Button ability2Button;
     public TMP_Text ability1Name;
@@ -16,11 +18,15 @@ public class BattleMenu : MonoBehaviour
     public TMP_Text ability2Cooldown;
     public TMP_Text ability1Tier;
     public TMP_Text ability2Tier;
+    public TMP_Text colorStrikeChipsText;
     public TMP_Text infoText;
+    public TMP_Text promptText;
     public float popTime = 0.2f;
     public float popStagger = 0.06f;
 
     bool subscribed;
+    List<Transform> popItems = new List<Transform>();
+    List<Vector3> baseScales = new List<Vector3>();
 
     void OnEnable()
     {
@@ -29,14 +35,29 @@ public class BattleMenu : MonoBehaviour
             return;
         }
 
+        if (popItems.Count == 0)
+        {
+            AddPopItem(attackButton);
+            AddPopItem(colorStrikeButton);
+            AddPopItem(ability1Button);
+            AddPopItem(ability2Button);
+        }
+
         battleManager.StateChanged += OnStateChanged;
         battleManager.TargetChanged += OnTargetChanged;
         battleManager.AllyChanged += OnAllyChanged;
-        Combatant.AnyColorStateChanged += OnColorStateChanged;
+        battleManager.AllyTargetingChanged += OnTargetingChanged;
+        Combatant.AnyColorStateChanged += OnCombatantEvent;
+        Combatant.AnyChipsChanged += OnCombatantEvent;
+        Combatant.AnyBulletsChanged += OnCombatantEvent;
 
         attackButton.onClick.AddListener(battleManager.SubmitAttack);
         ability1Button.onClick.AddListener(battleManager.SubmitAbilityOne);
         ability2Button.onClick.AddListener(battleManager.SubmitAbilityTwo);
+        if (colorStrikeButton != null)
+        {
+            colorStrikeButton.onClick.AddListener(battleManager.SubmitColorStrike);
+        }
 
         subscribed = true;
     }
@@ -51,11 +72,18 @@ public class BattleMenu : MonoBehaviour
         battleManager.StateChanged -= OnStateChanged;
         battleManager.TargetChanged -= OnTargetChanged;
         battleManager.AllyChanged -= OnAllyChanged;
-        Combatant.AnyColorStateChanged -= OnColorStateChanged;
+        battleManager.AllyTargetingChanged -= OnTargetingChanged;
+        Combatant.AnyColorStateChanged -= OnCombatantEvent;
+        Combatant.AnyChipsChanged -= OnCombatantEvent;
+        Combatant.AnyBulletsChanged -= OnCombatantEvent;
 
         attackButton.onClick.RemoveListener(battleManager.SubmitAttack);
         ability1Button.onClick.RemoveListener(battleManager.SubmitAbilityOne);
         ability2Button.onClick.RemoveListener(battleManager.SubmitAbilityTwo);
+        if (colorStrikeButton != null)
+        {
+            colorStrikeButton.onClick.RemoveListener(battleManager.SubmitColorStrike);
+        }
 
         subscribed = false;
     }
@@ -66,6 +94,17 @@ public class BattleMenu : MonoBehaviour
         {
             SetVisible(false);
         }
+    }
+
+    void AddPopItem(Button button)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        popItems.Add(button.transform);
+        baseScales.Add(button.transform.localScale);
     }
 
     bool FieldsAreSet()
@@ -108,6 +147,14 @@ public class BattleMenu : MonoBehaviour
         menuGroup.blocksRaycasts = visible;
     }
 
+    void RestoreScales()
+    {
+        for (int i = 0; i < popItems.Count; i++)
+        {
+            popItems[i].localScale = baseScales[i];
+        }
+    }
+
     void OnStateChanged(BattleState state)
     {
         StopAllCoroutines();
@@ -121,31 +168,36 @@ public class BattleMenu : MonoBehaviour
         else
         {
             SetVisible(false);
+            RestoreScales();
+        }
+    }
+
+    void RefreshIfPlayerTurn()
+    {
+        if (battleManager.State == BattleState.PlayerTurn)
+        {
+            Refresh();
         }
     }
 
     void OnTargetChanged(Combatant target)
     {
-        if (battleManager.State == BattleState.PlayerTurn)
-        {
-            Refresh();
-        }
+        RefreshIfPlayerTurn();
     }
 
     void OnAllyChanged(Combatant ally)
     {
-        if (battleManager.State == BattleState.PlayerTurn)
-        {
-            Refresh();
-        }
+        RefreshIfPlayerTurn();
     }
 
-    void OnColorStateChanged(Combatant who)
+    void OnTargetingChanged(bool targeting)
     {
-        if (battleManager.State == BattleState.PlayerTurn)
-        {
-            Refresh();
-        }
+        RefreshIfPlayerTurn();
+    }
+
+    void OnCombatantEvent(Combatant who)
+    {
+        RefreshIfPlayerTurn();
     }
 
     void SetText(TMP_Text text, string value)
@@ -167,12 +219,34 @@ public class BattleMenu : MonoBehaviour
         RefreshAbility(user, 0, ability1Button, ability1Name, ability1Cooldown, ability1Tier);
         RefreshAbility(user, 1, ability2Button, ability2Name, ability2Cooldown, ability2Tier);
 
+        if (colorStrikeButton != null)
+        {
+            colorStrikeButton.interactable = user.chips > 0;
+            SetText(colorStrikeChipsText, "CHIPS " + user.chips);
+        }
+
         Combatant target = battleManager.SelectedTarget;
         string targetName = target != null ? target.name : "-";
         Combatant ally = battleManager.SelectedAlly;
         string allyName = ally != null ? ally.name : "-";
 
-        SetText(infoText, user.data.displayName + "   HP " + user.currentHP + "/" + user.data.maxHP + "   BULLETS " + user.bulletsLeft + "\nTARGET: " + targetName + "   ALLY: " + allyName);
+        SetText(infoText, user.data.displayName + "   HP " + user.currentHP + "/" + user.data.maxHP + "   BULLETS " + user.bulletsLeft + "   CHIPS " + user.chips + "\nTARGET: " + targetName);
+
+        if (battleManager.IsTargetingAlly)
+        {
+            string abilityName = "ABILITY";
+            int pending = battleManager.PendingAbility;
+            if (pending >= 0 && pending < user.data.abilities.Length && user.data.abilities[pending] != null)
+            {
+                abilityName = user.data.abilities[pending].abilityName.ToUpper();
+            }
+
+            SetText(promptText, abilityName + ": CHOOSE AN ALLY - " + allyName + "\nARROWS OR CLICK TO PICK   ENTER OR THE SAME BUTTON TO CONFIRM   ESC TO CANCEL");
+        }
+        else
+        {
+            SetText(promptText, "");
+        }
     }
 
     void RefreshAbility(Combatant user, int index, Button button, TMP_Text nameText, TMP_Text cooldownText, TMP_Text tierText)
@@ -187,7 +261,7 @@ public class BattleMenu : MonoBehaviour
 
         AbilityData ability = user.data.abilities[index];
         int cooldown = user.cooldowns[index];
-        int tier = Mathf.Min(user.StackCount(ability), 3);
+        int tier = Mathf.Min(user.chips, 3);
 
         button.interactable = user.AbilityReady(index);
         SetText(nameText, ability.abilityName);
@@ -197,33 +271,28 @@ public class BattleMenu : MonoBehaviour
 
     IEnumerator Pop()
     {
-        Transform[] items = new Transform[] { attackButton.transform, ability1Button.transform, ability2Button.transform };
-
-        foreach (Transform t in items)
+        for (int i = 0; i < popItems.Count; i++)
         {
-            t.localScale = Vector3.zero;
+            popItems[i].localScale = Vector3.zero;
         }
 
         float elapsed = 0f;
-        float total = popTime + popStagger * (items.Length - 1);
+        float total = popTime + popStagger * (popItems.Count - 1);
 
         while (elapsed < total)
         {
             elapsed += Time.unscaledDeltaTime;
 
-            for (int i = 0; i < items.Length; i++)
+            for (int i = 0; i < popItems.Count; i++)
             {
                 float p = Mathf.Clamp01((elapsed - popStagger * i) / popTime);
                 float s = 1f + 2.70158f * Mathf.Pow(p - 1f, 3f) + 1.70158f * Mathf.Pow(p - 1f, 2f);
-                items[i].localScale = Vector3.one * s;
+                popItems[i].localScale = baseScales[i] * s;
             }
 
             yield return null;
         }
 
-        foreach (Transform t in items)
-        {
-            t.localScale = Vector3.one;
-        }
+        RestoreScales();
     }
 }

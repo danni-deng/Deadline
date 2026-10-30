@@ -26,16 +26,17 @@ public class Combatant : MonoBehaviour
     public static event Action<Combatant> AnyDied;
     public static event Action<Combatant> AnyColorStateChanged;
     public static event Action<Combatant, Combatant, BattleColor> AnyColorGained;
+    public static event Action<Combatant> AnyChipsChanged;
+    public static event Action<Combatant> AnyBulletsChanged;
 
     public CombatantData data;
     public bool isPlayerSide;
     public int currentHP;
-    public int healsLeft;
     public int bulletsLeft;
+    public int chips;
     public int shotsToColor = 5;
     public float hideDelay = 0.4f;
 
-    public int[] colorStacks = new int[3];
     public int[] colorProgress = new int[3];
     public List<BattleColor> colors = new List<BattleColor>();
     public int[] cooldowns = new int[0];
@@ -49,11 +50,6 @@ public class Combatant : MonoBehaviour
     public int Speed
     {
         get { return Mathf.Max(1, Mathf.RoundToInt(data.speed * (1f + SumEffects(StatusType.SpeedUp)))); }
-    }
-
-    public bool CanHeal
-    {
-        get { return healsLeft > 0 && currentHP < data.maxHP; }
     }
 
     public float AttackMultiplier
@@ -77,9 +73,8 @@ public class Combatant : MonoBehaviour
     public void Initialize()
     {
         currentHP = data.maxHP;
-        healsLeft = data.maxHeals;
         bulletsLeft = data.startingBullets;
-        colorStacks = new int[3];
+        chips = 0;
         colorProgress = new int[3];
         colors = new List<BattleColor>(data.startingColors);
         cooldowns = new int[data.abilities.Length];
@@ -88,6 +83,14 @@ public class Combatant : MonoBehaviour
         if (AnyColorStateChanged != null)
         {
             AnyColorStateChanged(this);
+        }
+        if (AnyChipsChanged != null)
+        {
+            AnyChipsChanged(this);
+        }
+        if (AnyBulletsChanged != null)
+        {
+            AnyBulletsChanged(this);
         }
     }
 
@@ -101,28 +104,6 @@ public class Combatant : MonoBehaviour
                 total += e.amount;
             }
         }
-        return total;
-    }
-
-    public int StackCount(AbilityData ability)
-    {
-        int total = 0;
-
-        if (ability.anyColor)
-        {
-            for (int i = 0; i < colorStacks.Length; i++)
-            {
-                total += colorStacks[i];
-            }
-        }
-        else
-        {
-            foreach (BattleColor c in ability.stackColors)
-            {
-                total += colorStacks[(int)c];
-            }
-        }
-
         return total;
     }
 
@@ -196,10 +177,31 @@ public class Combatant : MonoBehaviour
         }
     }
 
-    public void AddColorStack(BattleColor color)
+    public void AddChip()
     {
-        colorStacks[(int)color]++;
-        Debug.Log(name + " gained a " + color + " stack (now " + colorStacks[(int)color] + ")");
+        chips++;
+        Debug.Log(name + " gained a color chip (now " + chips + ")");
+
+        if (AnyChipsChanged != null)
+        {
+            AnyChipsChanged(this);
+        }
+    }
+
+    public bool SpendChip()
+    {
+        if (chips <= 0)
+        {
+            return false;
+        }
+
+        chips--;
+
+        if (AnyChipsChanged != null)
+        {
+            AnyChipsChanged(this);
+        }
+        return true;
     }
 
     public void OnTurnStart()
@@ -238,6 +240,11 @@ public class Combatant : MonoBehaviour
         return colors.Contains(color);
     }
 
+    public bool HasAnyColor(BattleColor a, BattleColor b)
+    {
+        return colors.Contains(a) || colors.Contains(b);
+    }
+
     public bool UseBullet()
     {
         if (bulletsLeft <= 0)
@@ -246,6 +253,11 @@ public class Combatant : MonoBehaviour
         }
 
         bulletsLeft--;
+
+        if (AnyBulletsChanged != null)
+        {
+            AnyBulletsChanged(this);
+        }
         return true;
     }
 
@@ -263,8 +275,8 @@ public class Combatant : MonoBehaviour
         {
             colorProgress[index] = 0;
             colors.Add(color);
-            shooter.colorStacks[index]++;
-            Debug.Log(name + " turned " + color + ", " + shooter.name + " now has " + shooter.colorStacks[index] + " " + color + " stack(s)");
+            Debug.Log(name + " turned " + color);
+            shooter.AddChip();
 
             if (AnyColorGained != null)
             {
@@ -312,12 +324,6 @@ public class Combatant : MonoBehaviour
         {
             AnyHealed(this, currentHP - before);
         }
-    }
-
-    public void Heal()
-    {
-        healsLeft--;
-        HealBy(data.healAmount);
     }
 
     void Hide()

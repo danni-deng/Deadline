@@ -15,7 +15,7 @@ public enum BattleState
 public enum BattleAction
 {
     Attack,
-    Heal,
+    ColorStrike,
     Ability
 }
 
@@ -25,6 +25,12 @@ public class BattleManager : MonoBehaviour
     public List<Combatant> enemies = new List<Combatant>();
     public float actionDelay = 0.8f;
     public int damageVariance = 1;
+    public float greyMultiplier = 0.5f;
+    public float plainStrikeMultiplier = 1f;
+    public float matchMultiplier = 1.25f;
+    public float mismatchMultiplier = 0.75f;
+    public float colorStrikePower = 2.5f;
+    public bool abilitiesUseColorMultiplier = true;
     public bool autoStart = true;
     public bool useDebugKeys = true;
 
@@ -32,17 +38,25 @@ public class BattleManager : MonoBehaviour
     public Combatant ActiveCombatant { get; private set; }
     public Combatant SelectedTarget { get; private set; }
     public Combatant SelectedAlly { get; private set; }
+    public bool IsTargetingAlly { get; private set; }
+
+    public int PendingAbility
+    {
+        get { return pendingAbility; }
+    }
 
     public event Action<BattleState> StateChanged;
     public event Action<Combatant> TurnStarted;
     public event Action<Combatant> TargetChanged;
     public event Action<Combatant> AllyChanged;
+    public event Action<bool> AllyTargetingChanged;
     public event Action<Combatant, Combatant, BattleAction> ActionPerformed;
 
     bool actionSubmitted;
     bool extraTurn;
     BattleAction submittedAction;
     int submittedAbility;
+    int pendingAbility = -1;
     Combatant submittedTarget;
     Coroutine battleRoutine;
     List<Combatant> roundOrder = new List<Combatant>();
@@ -230,7 +244,7 @@ public class BattleManager : MonoBehaviour
         List<Combatant> alive = new List<Combatant>();
         foreach (Combatant c in list)
         {
-            if (c.IsAlive)
+            if (c != null && c.IsAlive)
             {
                 alive.Add(c);
             }
@@ -242,7 +256,7 @@ public class BattleManager : MonoBehaviour
     {
         foreach (Combatant c in list)
         {
-            if (c.IsAlive)
+            if (c != null && c.IsAlive)
             {
                 return c;
             }
@@ -254,7 +268,7 @@ public class BattleManager : MonoBehaviour
     {
         foreach (Combatant c in list)
         {
-            if (c.IsAlive)
+            if (c != null && c.IsAlive)
             {
                 return false;
             }
@@ -265,6 +279,7 @@ public class BattleManager : MonoBehaviour
     IEnumerator PlayerTurn(Combatant user)
     {
         actionSubmitted = false;
+        EndAllyTargeting();
         SelectedTarget = FirstAlive(enemies);
         SelectedAlly = user;
         TargetChanged?.Invoke(SelectedTarget);
@@ -293,46 +308,77 @@ public class BattleManager : MonoBehaviour
     IEnumerator Execute(Combatant user, Combatant target, BattleAction action, int abilityIndex)
     {
         SetState(BattleState.Resolving);
+
+        if (action == BattleAction.ColorStrike)
+        {
+            user.SpendChip();
+        }
+
         ActionPerformed?.Invoke(user, target, action);
 
         yield return new WaitForSeconds(actionDelay);
 
-        if (action == BattleAction.Heal)
-        {
-            user.Heal();
-            Debug.Log(user.data.displayName + " healed (HP " + user.currentHP + ")");
-        }
-        else if (action == BattleAction.Ability)
+        if (action == BattleAction.Ability)
         {
             ApplyAbility(user, abilityIndex, target);
         }
+        else if (action == BattleAction.ColorStrike)
+        {
+            float multiplier = ColorMultiplier(user, target, true);
+            int damage = ComputeDamage(user, target, colorStrikePower, true);
+            target.TakeDamage(damage);
+            Debug.Log(user.data.displayName + " color strike on " + target.name + " for " + damage + " (x" + multiplier + ", HP " + target.currentHP + ")");
+        }
         else
         {
-            int damage = ComputeDamage(user, target, 1f);
+            bool enchanted = user.chips > 0;
+            float multiplier = ColorMultiplier(user, target, enchanted);
+            int damage = ComputeDamage(user, target, 1f, enchanted);
             target.TakeDamage(damage);
-            Debug.Log(user.data.displayName + " hit " + target.name + " for " + damage + " (HP " + target.currentHP + ")");
+            Debug.Log(user.data.displayName + " hit " + target.name + " for " + damage + " (x" + multiplier + ", HP " + target.currentHP + ")");
         }
 
         yield return new WaitForSeconds(actionDelay);
     }
 
-    int ComputeDamage(Combatant user, Combatant target, float power)
+    float ColorMultiplier(Combatant attacker, Combatant target, bool enchanted)
+    {
+        if (target.isPlayerSide)
+        {
+            return 1f;
+        }
+        if (target.colors.Count == 0)
+        {
+            return greyMultiplier;
+        }
+        if (!enchanted)
+        {
+            return plainStrikeMultiplier;
+        }
+        if (target.HasAnyColor(attacker.data.bulletColorA, attacker.data.bulletColorB))
+        {
+            return matchMultiplier;
+        }
+        return mismatchMultiplier;
+    }
+
+    int ComputeDamage(Combatant user, Combatant target, float power, bool enchanted)
     {
         float damage = user.data.attack * power * user.AttackMultiplier;
         damage += UnityEngine.Random.Range(-damageVariance, damageVariance + 1);
         damage *= 100f / (100f + target.data.defense);
         damage /= target.DefenseMultiplier;
+        damage *= ColorMultiplier(user, target, enchanted);
         return Mathf.Max(1, Mathf.RoundToInt(damage));
     }
 
     void ApplyAbility(Combatant user, int abilityIndex, Combatant chosen)
     {
         AbilityData ability = user.data.abilities[abilityIndex];
-        int stacks = user.StackCount(ability);
-        AbilityTier tier = ability.GetTier(stacks);
+        AbilityTier tier = ability.GetTier(user.chips);
 
         user.cooldowns[abilityIndex] = ability.cooldown;
-        Debug.Log(user.data.displayName + " used " + ability.abilityName + " (stacks " + stacks + ")");
+        Debug.Log(user.data.displayName + " used " + ability.abilityName + " (chips " + user.chips + ")");
 
         if (tier.selfDamagePercent > 0f)
         {
@@ -387,7 +433,7 @@ public class BattleManager : MonoBehaviour
 
         if (tier.damagePower > 0f)
         {
-            float damage = ComputeDamage(user, t, tier.damagePower);
+            float damage = ComputeDamage(user, t, tier.damagePower, abilitiesUseColorMultiplier);
 
             if (tier.missingHpBonus > 0f)
             {
@@ -443,39 +489,47 @@ public class BattleManager : MonoBehaviour
         }
         if (tier.grantStack)
         {
-            t.AddColorStack(tier.stackColor);
+            t.AddChip();
         }
     }
 
-    public bool SubmitPlayerAction(BattleAction action)
+    public bool TrySubmitAttack()
     {
         if (State != BattleState.PlayerTurn || actionSubmitted)
         {
             return false;
         }
-
-        if (action == BattleAction.Heal)
-        {
-            if (!ActiveCombatant.CanHeal)
-            {
-                return false;
-            }
-            submittedTarget = ActiveCombatant;
-        }
-        else if (action == BattleAction.Attack)
-        {
-            if (SelectedTarget == null || !SelectedTarget.IsAlive)
-            {
-                return false;
-            }
-            submittedTarget = SelectedTarget;
-        }
-        else
+        if (SelectedTarget == null || !SelectedTarget.IsAlive)
         {
             return false;
         }
 
-        submittedAction = action;
+        EndAllyTargeting();
+        submittedTarget = SelectedTarget;
+        submittedAction = BattleAction.Attack;
+        actionSubmitted = true;
+        return true;
+    }
+
+    public bool TrySubmitColorStrike()
+    {
+        if (State != BattleState.PlayerTurn || actionSubmitted)
+        {
+            return false;
+        }
+        if (ActiveCombatant.chips <= 0)
+        {
+            Debug.Log("No color chips for a color strike");
+            return false;
+        }
+        if (SelectedTarget == null || !SelectedTarget.IsAlive)
+        {
+            return false;
+        }
+
+        EndAllyTargeting();
+        submittedTarget = SelectedTarget;
+        submittedAction = BattleAction.ColorStrike;
         actionSubmitted = true;
         return true;
     }
@@ -496,30 +550,22 @@ public class BattleManager : MonoBehaviour
         }
 
         AbilityData ability = user.data.abilities[abilityIndex];
-        Combatant target;
+        bool needsPick = ability.target == AbilityTarget.SingleAlly && GetAlive(party).Count > 1;
+        bool confirming = IsTargetingAlly && pendingAbility == abilityIndex;
 
-        if (ability.target == AbilityTarget.SingleEnemy)
+        if (needsPick && !confirming)
         {
-            target = SelectedTarget;
-        }
-        else if (ability.target == AbilityTarget.AllEnemies)
-        {
-            target = FirstAlive(enemies);
-        }
-        else if (ability.target == AbilityTarget.SingleAlly)
-        {
-            target = SelectedAlly;
-        }
-        else
-        {
-            target = user;
+            BeginAllyTargeting(abilityIndex);
+            return true;
         }
 
+        Combatant target = PickTarget(user, ability);
         if (target == null || !target.IsAlive)
         {
             return false;
         }
 
+        EndAllyTargeting();
         submittedAction = BattleAction.Ability;
         submittedAbility = abilityIndex;
         submittedTarget = target;
@@ -527,14 +573,75 @@ public class BattleManager : MonoBehaviour
         return true;
     }
 
-    public void SubmitAttack()
+    Combatant PickTarget(Combatant user, AbilityData ability)
     {
-        SubmitPlayerAction(BattleAction.Attack);
+        if (ability.target == AbilityTarget.SingleEnemy)
+        {
+            return SelectedTarget;
+        }
+        if (ability.target == AbilityTarget.AllEnemies)
+        {
+            return FirstAlive(enemies);
+        }
+        if (ability.target == AbilityTarget.SingleAlly)
+        {
+            return SelectedAlly;
+        }
+        return user;
     }
 
-    public void SubmitHeal()
+    void BeginAllyTargeting(int abilityIndex)
     {
-        SubmitPlayerAction(BattleAction.Heal);
+        pendingAbility = abilityIndex;
+
+        if (!IsTargetingAlly)
+        {
+            IsTargetingAlly = true;
+            AllyTargetingChanged?.Invoke(true);
+        }
+
+        AllyChanged?.Invoke(SelectedAlly);
+    }
+
+    void EndAllyTargeting()
+    {
+        pendingAbility = -1;
+
+        if (IsTargetingAlly)
+        {
+            IsTargetingAlly = false;
+            AllyTargetingChanged?.Invoke(false);
+        }
+    }
+
+    public void CancelAllyTargeting()
+    {
+        if (!IsTargetingAlly)
+        {
+            return;
+        }
+
+        EndAllyTargeting();
+        SelectedAlly = ActiveCombatant;
+        AllyChanged?.Invoke(SelectedAlly);
+    }
+
+    public void ConfirmAllyTarget()
+    {
+        if (IsTargetingAlly)
+        {
+            SubmitAbility(pendingAbility);
+        }
+    }
+
+    public void SubmitAttack()
+    {
+        TrySubmitAttack();
+    }
+
+    public void SubmitColorStrike()
+    {
+        TrySubmitColorStrike();
     }
 
     public void SubmitAbilityOne()
@@ -593,7 +700,6 @@ public class BattleManager : MonoBehaviour
         index = (index + direction + alive.Count) % alive.Count;
         SelectedAlly = alive[index];
         AllyChanged?.Invoke(SelectedAlly);
-        Debug.Log("Ally target: " + SelectedAlly.name);
     }
 
     void SetState(BattleState newState)
@@ -609,29 +715,52 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.RightArrow))
+        if (IsTargetingAlly)
         {
-            CycleTarget(1);
+            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                CycleAlly(1);
+            }
+            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                CycleAlly(-1);
+            }
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                ConfirmAllyTarget();
+            }
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                CancelAllyTargeting();
+            }
         }
-        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        else
         {
-            CycleTarget(-1);
+            if (Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                CycleTarget(1);
+            }
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                CycleTarget(-1);
+            }
+            if (Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                CycleAlly(1);
+            }
+            if (Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                CycleAlly(-1);
+            }
         }
-        if (Input.GetKeyDown(KeyCode.UpArrow))
-        {
-            CycleAlly(1);
-        }
-        if (Input.GetKeyDown(KeyCode.DownArrow))
-        {
-            CycleAlly(-1);
-        }
+
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            SubmitAttack();
+            TrySubmitAttack();
         }
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            SubmitHeal();
+            TrySubmitColorStrike();
         }
         if (Input.GetKeyDown(KeyCode.Alpha3))
         {

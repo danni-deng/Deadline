@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1d8015c8a02625f48919663a514aa15b, type: 3}
   m_Name: molotav
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
-  abilityName: Molatov
+  abilityName: Molotov
   target: 1
   cooldown: 3
   anyColor: 0

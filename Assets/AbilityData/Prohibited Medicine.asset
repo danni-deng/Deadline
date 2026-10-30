@@ -15,7 +15,7 @@ MonoBehaviour:
   abilityName: Prohibited Medicine
   target: 2
   cooldown: 2
-  anyColor: 0
+  anyColor: 1
   stackColors: 
   tiers:
   - note: Tier 0
