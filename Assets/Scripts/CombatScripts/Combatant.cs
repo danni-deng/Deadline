@@ -33,10 +33,10 @@ public class Combatant : MonoBehaviour
     public bool isPlayerSide;
     public int currentHP;
     public int bulletsLeft;
-    public int chips;
     public int shotsToColor = 5;
     public float hideDelay = 0.4f;
 
+    public int[] chips = new int[3];
     public int[] colorProgress = new int[3];
     public List<BattleColor> colors = new List<BattleColor>();
     public int[] cooldowns = new int[0];
@@ -62,6 +62,19 @@ public class Combatant : MonoBehaviour
         get { return Mathf.Max(0.25f, 1f + SumEffects(StatusType.DefenseUp) - SumEffects(StatusType.DefenseDown)); }
     }
 
+    public int TotalChips
+    {
+        get
+        {
+            int total = 0;
+            for (int i = 0; i < chips.Length; i++)
+            {
+                total += chips[i];
+            }
+            return total;
+        }
+    }
+
     void Awake()
     {
         if (data != null)
@@ -74,7 +87,7 @@ public class Combatant : MonoBehaviour
     {
         currentHP = data.maxHP;
         bulletsLeft = data.startingBullets;
-        chips = 0;
+        chips = new int[3];
         colorProgress = new int[3];
         colors = new List<BattleColor>(data.startingColors);
         cooldowns = new int[data.abilities.Length];
@@ -103,6 +116,21 @@ public class Combatant : MonoBehaviour
             {
                 total += e.amount;
             }
+        }
+        return total;
+    }
+
+    public int ChipCount(AbilityData ability)
+    {
+        if (ability.anyColor)
+        {
+            return TotalChips;
+        }
+
+        int total = 0;
+        foreach (BattleColor c in ability.stackColors)
+        {
+            total += chips[(int)c];
         }
         return total;
     }
@@ -177,10 +205,10 @@ public class Combatant : MonoBehaviour
         }
     }
 
-    public void AddChip()
+    public void AddChip(BattleColor color)
     {
-        chips++;
-        Debug.Log(name + " gained a color chip (now " + chips + ")");
+        chips[(int)color]++;
+        Debug.Log(name + " gained a " + color + " chip (now " + chips[(int)color] + ")");
 
         if (AnyChipsChanged != null)
         {
@@ -188,14 +216,14 @@ public class Combatant : MonoBehaviour
         }
     }
 
-    public bool SpendChip()
+    public bool SpendChip(BattleColor color)
     {
-        if (chips <= 0)
+        if (chips[(int)color] <= 0)
         {
             return false;
         }
 
-        chips--;
+        chips[(int)color]--;
 
         if (AnyChipsChanged != null)
         {
@@ -276,7 +304,7 @@ public class Combatant : MonoBehaviour
             colorProgress[index] = 0;
             colors.Add(color);
             Debug.Log(name + " turned " + color);
-            shooter.AddChip();
+            shooter.AddChip(color);
 
             if (AnyColorGained != null)
             {

@@ -47,6 +47,7 @@ public class BattleMenu : MonoBehaviour
         battleManager.TargetChanged += OnTargetChanged;
         battleManager.AllyChanged += OnAllyChanged;
         battleManager.AllyTargetingChanged += OnTargetingChanged;
+        battleManager.StrikeChipChanged += OnStrikeChipChanged;
         Combatant.AnyColorStateChanged += OnCombatantEvent;
         Combatant.AnyChipsChanged += OnCombatantEvent;
         Combatant.AnyBulletsChanged += OnCombatantEvent;
@@ -73,6 +74,7 @@ public class BattleMenu : MonoBehaviour
         battleManager.TargetChanged -= OnTargetChanged;
         battleManager.AllyChanged -= OnAllyChanged;
         battleManager.AllyTargetingChanged -= OnTargetingChanged;
+        battleManager.StrikeChipChanged -= OnStrikeChipChanged;
         Combatant.AnyColorStateChanged -= OnCombatantEvent;
         Combatant.AnyChipsChanged -= OnCombatantEvent;
         Combatant.AnyBulletsChanged -= OnCombatantEvent;
@@ -195,6 +197,11 @@ public class BattleMenu : MonoBehaviour
         RefreshIfPlayerTurn();
     }
 
+    void OnStrikeChipChanged(BattleColor color)
+    {
+        RefreshIfPlayerTurn();
+    }
+
     void OnCombatantEvent(Combatant who)
     {
         RefreshIfPlayerTurn();
@@ -221,8 +228,15 @@ public class BattleMenu : MonoBehaviour
 
         if (colorStrikeButton != null)
         {
-            colorStrikeButton.interactable = user.chips > 0;
-            SetText(colorStrikeChipsText, "CHIPS " + user.chips);
+            colorStrikeButton.interactable = user.TotalChips > 0;
+
+            BattleColor chipColor = battleManager.StrikeChipColor;
+            string chipLabel = "NO CHIPS";
+            if (user.TotalChips > 0)
+            {
+                chipLabel = chipColor.ToString().ToUpper() + " x" + user.chips[(int)chipColor];
+            }
+            SetText(colorStrikeChipsText, chipLabel);
         }
 
         Combatant target = battleManager.SelectedTarget;
@@ -230,7 +244,7 @@ public class BattleMenu : MonoBehaviour
         Combatant ally = battleManager.SelectedAlly;
         string allyName = ally != null ? ally.name : "-";
 
-        SetText(infoText, user.data.displayName + "   HP " + user.currentHP + "/" + user.data.maxHP + "   BULLETS " + user.bulletsLeft + "   CHIPS " + user.chips + "\nTARGET: " + targetName);
+        SetText(infoText, user.data.displayName + "   HP " + user.currentHP + "/" + user.data.maxHP + "   BULLETS " + user.bulletsLeft + "   CHIPS R" + user.chips[0] + " Y" + user.chips[1] + " B" + user.chips[2] + "\nTARGET: " + targetName);
 
         if (battleManager.IsTargetingAlly)
         {
@@ -241,7 +255,7 @@ public class BattleMenu : MonoBehaviour
                 abilityName = user.data.abilities[pending].abilityName.ToUpper();
             }
 
-            SetText(promptText, abilityName + ": CHOOSE AN ALLY - " + allyName + "\nARROWS OR CLICK TO PICK   ENTER OR THE SAME BUTTON TO CONFIRM   ESC TO CANCEL");
+            SetText(promptText, abilityName + ": CHOOSE AN ALLY - " + allyName + "\nCLICK A PROFILE OR USE ARROWS   ENTER TO CONFIRM   ESC TO CANCEL");
         }
         else
         {
@@ -261,7 +275,7 @@ public class BattleMenu : MonoBehaviour
 
         AbilityData ability = user.data.abilities[index];
         int cooldown = user.cooldowns[index];
-        int tier = Mathf.Min(user.chips, 3);
+        int tier = Mathf.Min(user.ChipCount(ability), 3);
 
         button.interactable = user.AbilityReady(index);
         SetText(nameText, ability.abilityName);

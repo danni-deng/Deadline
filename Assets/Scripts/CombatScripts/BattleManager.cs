@@ -26,11 +26,8 @@ public class BattleManager : MonoBehaviour
     public float actionDelay = 0.8f;
     public int damageVariance = 1;
     public float greyMultiplier = 0.5f;
-    public float plainStrikeMultiplier = 1f;
-    public float matchMultiplier = 1.25f;
-    public float mismatchMultiplier = 0.75f;
-    public float colorStrikePower = 2.5f;
-    public bool abilitiesUseColorMultiplier = true;
+    public float colorStrikeMultiplier = 1.25f;
+    public float strikeMatchBonus = 1f;
     public bool autoStart = true;
     public bool useDebugKeys = true;
 
@@ -39,6 +36,7 @@ public class BattleManager : MonoBehaviour
     public Combatant SelectedTarget { get; private set; }
     public Combatant SelectedAlly { get; private set; }
     public bool IsTargetingAlly { get; private set; }
+    public BattleColor StrikeChipColor { get; private set; }
 
     public int PendingAbility
     {
@@ -50,11 +48,13 @@ public class BattleManager : MonoBehaviour
     public event Action<Combatant> TargetChanged;
     public event Action<Combatant> AllyChanged;
     public event Action<bool> AllyTargetingChanged;
+    public event Action<BattleColor> StrikeChipChanged;
     public event Action<Combatant, Combatant, BattleAction> ActionPerformed;
 
     bool actionSubmitted;
     bool extraTurn;
     BattleAction submittedAction;
+    BattleColor submittedChip;
     int submittedAbility;
     int pendingAbility = -1;
     Combatant submittedTarget;
@@ -62,11 +62,29 @@ public class BattleManager : MonoBehaviour
     List<Combatant> roundOrder = new List<Combatant>();
     int roundIndex;
 
+    void OnEnable()
+    {
+        Combatant.AnyChipsChanged += OnChipsChanged;
+    }
+
+    void OnDisable()
+    {
+        Combatant.AnyChipsChanged -= OnChipsChanged;
+    }
+
     void Start()
     {
         if (autoStart && party.Count > 0 && enemies.Count > 0)
         {
             StartBattle(party, enemies);
+        }
+    }
+
+    void OnChipsChanged(Combatant who)
+    {
+        if (who == ActiveCombatant && who.isPlayerSide && who.chips[(int)StrikeChipColor] <= 0)
+        {
+            PickBestStrikeChip(who);
         }
     }
 
@@ -276,10 +294,66 @@ public class BattleManager : MonoBehaviour
         return true;
     }
 
+    void PickBestStrikeChip(Combatant user)
+    {
+        int best = -1;
+        int bestCount = 0;
+
+        for (int i = 0; i < user.chips.Length; i++)
+        {
+            if (user.chips[i] > bestCount)
+            {
+                bestCount = user.chips[i];
+                best = i;
+            }
+        }
+
+        if (best >= 0)
+        {
+            StrikeChipColor = (BattleColor)best;
+        }
+
+        StrikeChipChanged?.Invoke(StrikeChipColor);
+    }
+
+    public void SelectStrikeChip(BattleColor color)
+    {
+        if (State != BattleState.PlayerTurn || ActiveCombatant == null)
+        {
+            return;
+        }
+        if (ActiveCombatant.chips[(int)color] <= 0)
+        {
+            return;
+        }
+
+        StrikeChipColor = color;
+        StrikeChipChanged?.Invoke(color);
+    }
+
+    public void CycleStrikeChip()
+    {
+        if (State != BattleState.PlayerTurn || ActiveCombatant == null)
+        {
+            return;
+        }
+
+        for (int step = 1; step <= 3; step++)
+        {
+            int index = ((int)StrikeChipColor + step) % 3;
+            if (ActiveCombatant.chips[index] > 0)
+            {
+                SelectStrikeChip((BattleColor)index);
+                return;
+            }
+        }
+    }
+
     IEnumerator PlayerTurn(Combatant user)
     {
         actionSubmitted = false;
         EndAllyTargeting();
+        PickBestStrikeChip(user);
         SelectedTarget = FirstAlive(enemies);
         SelectedAlly = user;
         TargetChanged?.Invoke(SelectedTarget);
@@ -311,7 +385,7 @@ public class BattleManager : MonoBehaviour
 
         if (action == BattleAction.ColorStrike)
         {
-            user.SpendChip();
+            user.SpendChip(submittedChip);
         }
 
         ActionPerformed?.Invoke(user, target, action);
@@ -324,24 +398,23 @@ public class BattleManager : MonoBehaviour
         }
         else if (action == BattleAction.ColorStrike)
         {
-            float multiplier = ColorMultiplier(user, target, true);
-            int damage = ComputeDamage(user, target, colorStrikePower, true);
+            float multiplier = EnemyColorMultiplier(user, target, true);
+            int damage = ComputeDamage(user, target, colorStrikeMultiplier, true);
             target.TakeDamage(damage);
-            Debug.Log(user.data.displayName + " color strike on " + target.name + " for " + damage + " (x" + multiplier + ", HP " + target.currentHP + ")");
+            Debug.Log(user.data.displayName + " color strike (" + submittedChip + " chip) on " + target.name + " for " + damage + " (color x" + multiplier + ", HP " + target.currentHP + ")");
         }
         else
         {
-            bool enchanted = user.chips > 0;
-            float multiplier = ColorMultiplier(user, target, enchanted);
-            int damage = ComputeDamage(user, target, 1f, enchanted);
+            float multiplier = EnemyColorMultiplier(user, target, false);
+            int damage = ComputeDamage(user, target, 1f, false);
             target.TakeDamage(damage);
-            Debug.Log(user.data.displayName + " hit " + target.name + " for " + damage + " (x" + multiplier + ", HP " + target.currentHP + ")");
+            Debug.Log(user.data.displayName + " hit " + target.name + " for " + damage + " (color x" + multiplier + ", HP " + target.currentHP + ")");
         }
 
         yield return new WaitForSeconds(actionDelay);
     }
 
-    float ColorMultiplier(Combatant attacker, Combatant target, bool enchanted)
+    float EnemyColorMultiplier(Combatant attacker, Combatant target, bool isStrike)
     {
         if (target.isPlayerSide)
         {
@@ -351,34 +424,31 @@ public class BattleManager : MonoBehaviour
         {
             return greyMultiplier;
         }
-        if (!enchanted)
+        if (isStrike && target.HasAnyColor(attacker.data.bulletColorA, attacker.data.bulletColorB))
         {
-            return plainStrikeMultiplier;
+            return strikeMatchBonus;
         }
-        if (target.HasAnyColor(attacker.data.bulletColorA, attacker.data.bulletColorB))
-        {
-            return matchMultiplier;
-        }
-        return mismatchMultiplier;
+        return 1f;
     }
 
-    int ComputeDamage(Combatant user, Combatant target, float power, bool enchanted)
+    int ComputeDamage(Combatant user, Combatant target, float power, bool isStrike)
     {
         float damage = user.data.attack * power * user.AttackMultiplier;
         damage += UnityEngine.Random.Range(-damageVariance, damageVariance + 1);
         damage *= 100f / (100f + target.data.defense);
         damage /= target.DefenseMultiplier;
-        damage *= ColorMultiplier(user, target, enchanted);
+        damage *= EnemyColorMultiplier(user, target, isStrike);
         return Mathf.Max(1, Mathf.RoundToInt(damage));
     }
 
     void ApplyAbility(Combatant user, int abilityIndex, Combatant chosen)
     {
         AbilityData ability = user.data.abilities[abilityIndex];
-        AbilityTier tier = ability.GetTier(user.chips);
+        int count = user.ChipCount(ability);
+        AbilityTier tier = ability.GetTier(count);
 
         user.cooldowns[abilityIndex] = ability.cooldown;
-        Debug.Log(user.data.displayName + " used " + ability.abilityName + " (chips " + user.chips + ")");
+        Debug.Log(user.data.displayName + " used " + ability.abilityName + " (matching chips " + count + ")");
 
         if (tier.selfDamagePercent > 0f)
         {
@@ -433,7 +503,7 @@ public class BattleManager : MonoBehaviour
 
         if (tier.damagePower > 0f)
         {
-            float damage = ComputeDamage(user, t, tier.damagePower, abilitiesUseColorMultiplier);
+            float damage = ComputeDamage(user, t, tier.damagePower, false);
 
             if (tier.missingHpBonus > 0f)
             {
@@ -489,7 +559,7 @@ public class BattleManager : MonoBehaviour
         }
         if (tier.grantStack)
         {
-            t.AddChip();
+            t.AddChip(tier.stackColor);
         }
     }
 
@@ -517,10 +587,16 @@ public class BattleManager : MonoBehaviour
         {
             return false;
         }
-        if (ActiveCombatant.chips <= 0)
+
+        Combatant user = ActiveCombatant;
+        if (user.TotalChips <= 0)
         {
             Debug.Log("No color chips for a color strike");
             return false;
+        }
+        if (user.chips[(int)StrikeChipColor] <= 0)
+        {
+            PickBestStrikeChip(user);
         }
         if (SelectedTarget == null || !SelectedTarget.IsAlive)
         {
@@ -530,6 +606,7 @@ public class BattleManager : MonoBehaviour
         EndAllyTargeting();
         submittedTarget = SelectedTarget;
         submittedAction = BattleAction.ColorStrike;
+        submittedChip = StrikeChipColor;
         actionSubmitted = true;
         return true;
     }
@@ -754,6 +831,10 @@ public class BattleManager : MonoBehaviour
             }
         }
 
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            CycleStrikeChip();
+        }
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
             TrySubmitAttack();

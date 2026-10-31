@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
   displayName: 
   portrait: {fileID: 0}
-  maxHP: 12
-  attack: 3
-  defense: 0
+  maxHP: 30
+  attack: 5
+  defense: 2
   speed: 4
-  healAmount: 0
-  maxHeals: 0
+  healAmount: 1
+  maxHeals: 1
   bulletColorA: 0
   bulletColorB: 1
   startingBullets: 40
