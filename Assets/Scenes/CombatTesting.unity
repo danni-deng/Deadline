@@ -4965,7 +4965,7 @@ MonoBehaviour:
   swapKey: 304
   shotDamage: 2
   matchDamageMultiplier: 2
-  shotCooldown: 0.4
+  shotCooldown: 0.15
   shakeTime: 0.15
   shakeAmount: 0.15
   shootTrigger: triggerFUCK
