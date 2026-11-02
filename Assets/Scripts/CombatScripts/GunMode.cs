@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 public class GunMode : MonoBehaviour
@@ -5,6 +6,7 @@ public class GunMode : MonoBehaviour
     public BattleManager battleManager;
     public gunshotController gunSound;
     public colorChanger colorIndicator;
+    public TMP_Text shotsText;
     public KeyCode fireKey = KeyCode.Space;
     public KeyCode swapKey = KeyCode.LeftShift;
     public int shotDamage = 2;
@@ -15,6 +17,7 @@ public class GunMode : MonoBehaviour
     public string shootTrigger = "triggerFUCK";
 
     int selectedSlot;
+    int shotsUsed;
     float nextShotTime;
     CameraShake cameraShake;
     AudioSource audioSource;
@@ -29,6 +32,19 @@ public class GunMode : MonoBehaviour
                 return BattleColor.Red;
             }
             return selectedSlot == 0 ? user.data.bulletColorA : user.data.bulletColorB;
+        }
+    }
+
+    public int ShotsLeft
+    {
+        get
+        {
+            Combatant user = battleManager.ActiveCombatant;
+            if (user == null || user.data == null)
+            {
+                return 0;
+            }
+            return Mathf.Max(0, user.data.shotsPerTurn - shotsUsed);
         }
     }
 
@@ -80,12 +96,15 @@ public class GunMode : MonoBehaviour
         }
 
         UpdateIndicator();
+        UpdateText();
     }
 
     void OnTurnStarted(Combatant c)
     {
         selectedSlot = 0;
+        shotsUsed = 0;
         UpdateIndicator();
+        UpdateText();
     }
 
     void Update()
@@ -115,6 +134,7 @@ public class GunMode : MonoBehaviour
 
         selectedSlot = 1 - selectedSlot;
         UpdateIndicator();
+        UpdateText();
 
         if (colorIndicator != null)
         {
@@ -130,6 +150,28 @@ public class GunMode : MonoBehaviour
         }
     }
 
+    void UpdateText()
+    {
+        if (shotsText == null)
+        {
+            return;
+        }
+
+        Combatant user = battleManager.ActiveCombatant;
+        if (user == null || user.data == null || !user.isPlayerSide)
+        {
+            shotsText.text = "";
+            return;
+        }
+
+        BattleColor a = user.data.bulletColorA;
+        BattleColor b = user.data.bulletColorB;
+        string first = (selectedSlot == 0 ? "> " : "   ") + a.ToString().ToUpper() + " " + user.BulletsOf(a);
+        string second = (selectedSlot == 1 ? "> " : "   ") + b.ToString().ToUpper() + " " + user.BulletsOf(b);
+
+        shotsText.text = "SHOTS " + ShotsLeft + "/" + user.data.shotsPerTurn + "\n" + first + "\n" + second;
+    }
+
     void Fire()
     {
         Combatant shooter = battleManager.ActiveCombatant;
@@ -140,14 +182,22 @@ public class GunMode : MonoBehaviour
             return;
         }
 
-        if (!shooter.UseBullet())
+        if (ShotsLeft <= 0)
         {
-            Debug.Log(shooter.data.displayName + " is out of bullets");
+            Debug.Log(shooter.data.displayName + " has no shots left this turn (max " + shooter.data.shotsPerTurn + ")");
             return;
         }
 
-        nextShotTime = Time.time + shotCooldown;
         BattleColor color = CurrentColor;
+
+        if (!shooter.UseBullet(color))
+        {
+            Debug.Log(shooter.data.displayName + " is out of " + color + " bullets");
+            return;
+        }
+
+        shotsUsed++;
+        nextShotTime = Time.time + shotCooldown;
 
         PlayShotEffects(shooter);
 
@@ -165,7 +215,9 @@ public class GunMode : MonoBehaviour
             target.TakeDamage(damage);
         }
 
-        Debug.Log(shooter.data.displayName + " shot " + target.name + " with " + color + " (progress " + target.colorProgress[(int)color] + "/" + target.shotsToColor + ", bullets left " + shooter.bulletsLeft + ")");
+        UpdateText();
+
+        Debug.Log(shooter.data.displayName + " shot " + target.name + " with " + color + " (inking " + target.colorProgress[(int)color] + "/" + target.shotsToColor + ", " + color + " bullets left " + shooter.BulletsOf(color) + ", shots left this turn " + ShotsLeft + ")");
     }
 
     void PlayShotEffects(Combatant shooter)

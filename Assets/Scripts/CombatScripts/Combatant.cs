@@ -32,10 +32,10 @@ public class Combatant : MonoBehaviour
     public CombatantData data;
     public bool isPlayerSide;
     public int currentHP;
-    public int bulletsLeft;
     public int shotsToColor = 5;
     public float hideDelay = 0.4f;
 
+    public int[] bullets = new int[3];
     public int[] chips = new int[3];
     public int[] colorProgress = new int[3];
     public List<BattleColor> colors = new List<BattleColor>();
@@ -62,6 +62,19 @@ public class Combatant : MonoBehaviour
         get { return Mathf.Max(0.25f, 1f + SumEffects(StatusType.DefenseUp) - SumEffects(StatusType.DefenseDown)); }
     }
 
+    public int bulletsLeft
+    {
+        get
+        {
+            int total = 0;
+            for (int i = 0; i < bullets.Length; i++)
+            {
+                total += bullets[i];
+            }
+            return total;
+        }
+    }
+
     public int TotalChips
     {
         get
@@ -86,7 +99,9 @@ public class Combatant : MonoBehaviour
     public void Initialize()
     {
         currentHP = data.maxHP;
-        bulletsLeft = data.startingBullets;
+        bullets = new int[3];
+        bullets[(int)data.bulletColorA] = data.bulletsPerColor;
+        bullets[(int)data.bulletColorB] = data.bulletsPerColor;
         chips = new int[3];
         colorProgress = new int[3];
         colors = new List<BattleColor>(data.startingColors);
@@ -273,14 +288,19 @@ public class Combatant : MonoBehaviour
         return colors.Contains(a) || colors.Contains(b);
     }
 
-    public bool UseBullet()
+    public int BulletsOf(BattleColor color)
     {
-        if (bulletsLeft <= 0)
+        return bullets[(int)color];
+    }
+
+    public bool UseBullet(BattleColor color)
+    {
+        if (bullets[(int)color] <= 0)
         {
             return false;
         }
 
-        bulletsLeft--;
+        bullets[(int)color]--;
 
         if (AnyBulletsChanged != null)
         {

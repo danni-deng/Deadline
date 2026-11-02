@@ -15,7 +15,8 @@ public class CombatantData : ScriptableObject
 
     public BattleColor bulletColorA = BattleColor.Red;
     public BattleColor bulletColorB = BattleColor.Yellow;
-    public int startingBullets = 40;
+    public int bulletsPerColor = 40;
+    public int shotsPerTurn = 5;
 
     public List<BattleColor> startingColors = new List<BattleColor>();
     public AbilityData[] abilities = new AbilityData[0];
