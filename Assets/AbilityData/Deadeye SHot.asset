@@ -10,13 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1d8015c8a02625f48919663a514aa15b, type: 3}
-  m_Name: Deadeye SHot
+  m_Name: Deadeye Shot
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
   abilityName: Deadeye Shot
   target: 0
   cooldown: 2
   anyColor: 0
   stackColors: 0000000001000000
+  inheritLowerTiers: 1
   tiers:
   - note: Tier 0
     damagePower: 1.5
@@ -29,6 +30,7 @@ MonoBehaviour:
     regenTurns: 0
     attackBoost: 0
     defenseBoost: 0
+    speedBoost: 0
     buffTurns: 0
     defenseDropChance: 0
     defenseDropPercent: 0.2
@@ -50,6 +52,7 @@ MonoBehaviour:
     regenTurns: 0
     attackBoost: 0
     defenseBoost: 0
+    speedBoost: 0
     buffTurns: 0
     defenseDropChance: 0
     defenseDropPercent: 0.2
@@ -61,8 +64,8 @@ MonoBehaviour:
     hitAllAllies: 0
     extraTurn: 0
   - note: Tier 2
-    damagePower: 0
-    critChance: 0
+    damagePower: 2.2
+    critChance: 0.4
     critMultiplier: 2.5
     missingHpBonus: 0
     selfDamagePercent: 0
@@ -71,6 +74,7 @@ MonoBehaviour:
     regenTurns: 0
     attackBoost: 0
     defenseBoost: 0
+    speedBoost: 0
     buffTurns: 0
     defenseDropChance: 0
     defenseDropPercent: 0.2
@@ -92,6 +96,7 @@ MonoBehaviour:
     regenTurns: 0
     attackBoost: 0
     defenseBoost: 0
+    speedBoost: 0
     buffTurns: 0
     defenseDropChance: 0
     defenseDropPercent: 0.2

@@ -17,6 +17,7 @@ MonoBehaviour:
   cooldown: 2
   anyColor: 0
   stackColors: 0000000001000000
+  inheritLowerTiers: 1
   tiers:
   - note: Tier 0
     damagePower: 0
@@ -45,7 +46,7 @@ MonoBehaviour:
     critChance: 0
     critMultiplier: 2.5
     missingHpBonus: 0
-    selfDamagePercent: 0
+    selfDamagePercent: 0.1
     healPercent: 0
     regenPercent: 0
     regenTurns: 0
@@ -67,7 +68,7 @@ MonoBehaviour:
     critChance: 0
     critMultiplier: 2.5
     missingHpBonus: 0
-    selfDamagePercent: 0
+    selfDamagePercent: 0.1
     healPercent: 0
     regenPercent: 0
     regenTurns: 0
@@ -89,7 +90,7 @@ MonoBehaviour:
     critChance: 0
     critMultiplier: 2.5
     missingHpBonus: 0
-    selfDamagePercent: 0
+    selfDamagePercent: 0.1
     healPercent: 0
     regenPercent: 0
     regenTurns: 0

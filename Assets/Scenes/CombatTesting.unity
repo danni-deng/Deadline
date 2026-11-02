@@ -920,9 +920,9 @@ MonoBehaviour:
   data: {fileID: 11400000, guid: 39fefab9d01009c47bbc54bc526c2446, type: 2}
   isPlayerSide: 1
   currentHP: 0
-  bulletsLeft: 0
   shotsToColor: 5
   hideDelay: 0.4
+  bullets: 000000000000000000000000
   chips: 
   colorProgress: 000000000000000000000000
   colors: 
@@ -2859,9 +2859,9 @@ MonoBehaviour:
   data: {fileID: 11400000, guid: 39fefab9d01009c47bbc54bc526c2446, type: 2}
   isPlayerSide: 1
   currentHP: 16
-  bulletsLeft: 5
   shotsToColor: 5
   hideDelay: 0.4
+  bullets: 000000000000000000000000
   chips: 
   colorProgress: 000000000000000000000000
   colors: 0000000001000000
@@ -3028,7 +3028,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 615891153}
   m_Enabled: 1
-  m_Alpha: 1
+  m_Alpha: 0
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -3649,9 +3649,9 @@ MonoBehaviour:
   data: {fileID: 11400000, guid: aae4563c2adf33e448194ffacc30ac18, type: 2}
   isPlayerSide: 1
   currentHP: 18
-  bulletsLeft: 5
   shotsToColor: 5
   hideDelay: 0.4
+  bullets: 000000000000000000000000
   chips: 
   colorProgress: 000000000000000000000000
   colors: 0000000002000000
@@ -3869,9 +3869,9 @@ MonoBehaviour:
   data: {fileID: 11400000, guid: 0c836f00597dee9429a3168fc8382fb9, type: 2}
   isPlayerSide: 0
   currentHP: 0
-  bulletsLeft: 0
   shotsToColor: 5
   hideDelay: 0.4
+  bullets: 000000000000000000000000
   chips: 
   colorProgress: 000000000000000000000000
   colors: 
@@ -4088,9 +4088,9 @@ MonoBehaviour:
   data: {fileID: 11400000, guid: adf4d4f8c5d7e8c40a271d5b95e79292, type: 2}
   isPlayerSide: 1
   currentHP: 30
-  bulletsLeft: 5
   shotsToColor: 5
   hideDelay: 0.4
+  bullets: 000000000000000000000000
   chips: 
   colorProgress: 000000000000000000000000
   colors: 0200000001000000
@@ -4960,6 +4960,7 @@ MonoBehaviour:
   battleManager: {fileID: 1092224801}
   gunSound: {fileID: 1027774484}
   colorIndicator: {fileID: 1031351131}
+  shotsText: {fileID: 0}
   fireKey: 32
   swapKey: 304
   shotDamage: 2
@@ -5504,8 +5505,12 @@ MonoBehaviour:
   backSlots:
   - {fileID: 134537932}
   - {fileID: 1678107698}
+  stepForward: 0.4
+  stepSide: 0.5
+  activeScale: 1.06
   fadedTint: {r: 0.55, g: 0.55, b: 0.55, a: 0.7}
   orderStep: 1
+  activeOrderBoost: 10
   moveTime: 0.3
 --- !u!4 &1347764993
 Transform:
@@ -5731,9 +5736,9 @@ MonoBehaviour:
   data: {fileID: 11400000, guid: 0c836f00597dee9429a3168fc8382fb9, type: 2}
   isPlayerSide: 0
   currentHP: 0
-  bulletsLeft: 0
   shotsToColor: 5
   hideDelay: 0.4
+  bullets: 000000000000000000000000
   chips: 
   colorProgress: 000000000000000000000000
   colors: 
