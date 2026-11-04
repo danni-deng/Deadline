@@ -18,6 +18,13 @@ public class StatusEffect
     public int turnsLeft;
 }
 
+public enum BulletResult
+{
+    Built,
+    Activated,
+    Resisted
+}
+
 public class Combatant : MonoBehaviour
 {
     public const float TurnDistance = 100f;
@@ -29,6 +36,7 @@ public class Combatant : MonoBehaviour
     public static event Action<Combatant> AnyDied;
     public static event Action<Combatant> AnyStatusChanged;
     public static event Action<Combatant> AnyBulletsChanged;
+    public static event Action<Combatant, BattleColor> AnyDebuffActivated;
 
     public CombatantData data;
     public bool isPlayerSide;
@@ -38,33 +46,64 @@ public class Combatant : MonoBehaviour
     public int bonusShots;
 
     public int[] bullets = new int[3];
-    public int bleedStacks;
-    public int slowStacks;
-    public int stunBuildup;
-    public bool stunned;
-    public int stunImmuneTurns;
+    public int[] buildup = new int[3];
+    public int vulnerableTurns;
+    public int weakenedTurns;
+    public int interruptedTurns;
+    public int resistTurns;
 
     public int[] cooldowns = new int[0];
     public List<StatusEffect> effects = new List<StatusEffect>();
+
+    public static string DebuffName(BattleColor color)
+    {
+        if (color == BattleColor.Red)
+        {
+            return "Vulnerable";
+        }
+        if (color == BattleColor.Yellow)
+        {
+            return "Interrupted";
+        }
+        return "Weakened";
+    }
+
+    public static string DebuffDescription(BattleColor color)
+    {
+        if (color == BattleColor.Red)
+        {
+            return "Takes increased damage.";
+        }
+        if (color == BattleColor.Yellow)
+        {
+            return "Next attack is delayed.";
+        }
+        return "Deals reduced damage.";
+    }
 
     public bool IsAlive
     {
         get { return currentHP > 0; }
     }
 
-    public float SlowPercent
+    public bool IsResistant
     {
-        get { return Mathf.Clamp(slowStacks * Rules.slowPerStack * data.debuffEffectiveness, 0f, 0.9f); }
+        get { return resistTurns > 0; }
+    }
+
+    public bool stunned
+    {
+        get { return false; }
+    }
+
+    public int BuildupThreshold
+    {
+        get { return Mathf.Max(1, Rules.buildupThreshold + data.extraBuildup); }
     }
 
     public float EffectiveSpeed
     {
-        get
-        {
-            float speed = data.speed * (1f + SumEffects(StatusType.SpeedUp));
-            speed *= 1f - SlowPercent;
-            return Mathf.Max(1f, speed);
-        }
+        get { return Mathf.Max(1f, data.speed * (1f + SumEffects(StatusType.SpeedUp))); }
     }
 
     public int Speed
@@ -72,33 +111,30 @@ public class Combatant : MonoBehaviour
         get { return Mathf.RoundToInt(EffectiveSpeed); }
     }
 
-    public int StunThreshold
-    {
-        get { return Rules.stunHitsRequired + data.stunExtraHits; }
-    }
-
-    public int BleedDamagePerTick
+    public float AttackMultiplier
     {
         get
         {
-            if (bleedStacks <= 0)
+            float multiplier = 1f + SumEffects(StatusType.AttackUp);
+            if (weakenedTurns > 0)
             {
-                return 0;
+                multiplier *= 1f - Rules.weakenedDamagePenalty;
             }
-
-            float percent = Rules.bleedPercentPerStack * data.debuffEffectiveness;
-            return Mathf.Max(1, Mathf.RoundToInt(data.maxHP * percent * bleedStacks));
+            return multiplier;
         }
-    }
-
-    public float AttackMultiplier
-    {
-        get { return 1f + SumEffects(StatusType.AttackUp); }
     }
 
     public float DefenseMultiplier
     {
-        get { return Mathf.Max(0.25f, 1f + SumEffects(StatusType.DefenseUp)); }
+        get
+        {
+            float multiplier = Mathf.Max(0.25f, 1f + SumEffects(StatusType.DefenseUp));
+            if (vulnerableTurns > 0)
+            {
+                multiplier /= 1f + Rules.vulnerableDamageBonus;
+            }
+            return multiplier;
+        }
     }
 
     public int bulletsLeft
@@ -130,11 +166,11 @@ public class Combatant : MonoBehaviour
         bullets[(int)data.bulletColorB] = data.bulletsPerColor;
         bonusShots = 0;
         charge = TurnDistance * Rules.startCharge;
-        bleedStacks = 0;
-        slowStacks = 0;
-        stunBuildup = 0;
-        stunned = false;
-        stunImmuneTurns = 0;
+        buildup = new int[3];
+        vulnerableTurns = 0;
+        weakenedTurns = 0;
+        interruptedTurns = 0;
+        resistTurns = 0;
         cooldowns = new int[data.abilities.Length];
         effects = new List<StatusEffect>();
 
@@ -169,6 +205,36 @@ public class Combatant : MonoBehaviour
             }
         }
         return total;
+    }
+
+    public int LeadingBuildup()
+    {
+        int best = -1;
+        int bestCount = 0;
+
+        for (int i = 0; i < buildup.Length; i++)
+        {
+            if (buildup[i] > bestCount)
+            {
+                bestCount = buildup[i];
+                best = i;
+            }
+        }
+
+        return best;
+    }
+
+    public int DebuffTurns(BattleColor color)
+    {
+        if (color == BattleColor.Red)
+        {
+            return vulnerableTurns;
+        }
+        if (color == BattleColor.Yellow)
+        {
+            return interruptedTurns;
+        }
+        return weakenedTurns;
     }
 
     public bool AbilityReady(int index)
@@ -238,38 +304,60 @@ public class Combatant : MonoBehaviour
         return true;
     }
 
-    public void ApplyBullet(BattleColor color)
+    public BulletResult ApplyBullet(BattleColor color)
     {
-        if (color == BattleColor.Red)
+        if (resistTurns > 0)
         {
-            bleedStacks = Mathf.Min(Rules.maxBleedStacks, bleedStacks + 1);
+            return BulletResult.Resisted;
         }
-        else if (color == BattleColor.Yellow)
+
+        int index = (int)color;
+        buildup[index]++;
+
+        if (buildup[index] >= BuildupThreshold)
         {
-            if (!stunned && stunImmuneTurns <= 0)
-            {
-                stunBuildup++;
-                if (stunBuildup >= StunThreshold)
-                {
-                    stunBuildup = 0;
-                    stunned = true;
-                }
-            }
-        }
-        else
-        {
-            slowStacks = Mathf.Min(Rules.maxSlowStacks, slowStacks + 1);
+            ActivateDebuff(color);
+            return BulletResult.Activated;
         }
 
         NotifyStatus();
+        return BulletResult.Built;
+    }
+
+    void ActivateDebuff(BattleColor color)
+    {
+        for (int i = 0; i < buildup.Length; i++)
+        {
+            buildup[i] = 0;
+        }
+
+        resistTurns = Rules.resistanceTurns;
+
+        if (color == BattleColor.Red)
+        {
+            vulnerableTurns = Rules.vulnerableTurns;
+        }
+        else if (color == BattleColor.Blue)
+        {
+            weakenedTurns = Rules.weakenedTurns;
+        }
+        else
+        {
+            interruptedTurns = Rules.interruptedTurns;
+            charge = Mathf.Max(0f, charge - TurnDistance * Rules.interruptDelayPercent);
+        }
+
+        Debug.Log(name + " is now " + DebuffName(color));
+        NotifyStatus();
+
+        if (AnyDebuffActivated != null)
+        {
+            AnyDebuffActivated(this, color);
+        }
     }
 
     public void ConsumeStun()
     {
-        stunned = false;
-        stunBuildup = 0;
-        stunImmuneTurns = Rules.stunImmuneTurns;
-        NotifyStatus();
     }
 
     public void OnTurnStart()
@@ -289,20 +377,6 @@ public class Combatant : MonoBehaviour
                 HealBy(Mathf.RoundToInt(data.maxHP * e.amount));
             }
         }
-
-        if (stunImmuneTurns > 0)
-        {
-            stunImmuneTurns--;
-            NotifyStatus();
-        }
-
-        if (bleedStacks > 0)
-        {
-            int damage = BleedDamagePerTick;
-            bleedStacks = Mathf.Max(0, bleedStacks - Rules.bleedDecayPerTurn);
-            NotifyStatus();
-            TakeDamage(damage);
-        }
     }
 
     public void OnTurnEnd()
@@ -316,9 +390,21 @@ public class Combatant : MonoBehaviour
             }
         }
 
-        if (slowStacks > 0)
+        if (vulnerableTurns > 0)
         {
-            slowStacks = Mathf.Max(0, slowStacks - Rules.slowDecayPerTurn);
+            vulnerableTurns--;
+        }
+        if (weakenedTurns > 0)
+        {
+            weakenedTurns--;
+        }
+        if (interruptedTurns > 0)
+        {
+            interruptedTurns--;
+        }
+        if (resistTurns > 0)
+        {
+            resistTurns--;
         }
 
         NotifyStatus();

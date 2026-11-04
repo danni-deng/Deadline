@@ -1,13 +1,13 @@
 [System.Serializable]
 public class DebuffRules
 {
-    public int maxBleedStacks = 5;
-    public float bleedPercentPerStack = 0.02f;
-    public int bleedDecayPerTurn = 2;
-    public int stunHitsRequired = 3;
-    public int stunImmuneTurns = 2;
-    public float slowPerStack = 0.08f;
-    public int maxSlowStacks = 4;
-    public int slowDecayPerTurn = 1;
+    public int buildupThreshold = 7;
+    public int resistanceTurns = 1;
+    public int vulnerableTurns = 2;
+    public int weakenedTurns = 2;
+    public int interruptedTurns = 1;
+    public float vulnerableDamageBonus = 0.25f;
+    public float weakenedDamagePenalty = 0.3f;
+    public float interruptDelayPercent = 0.5f;
     public float startCharge = 0.35f;
 }

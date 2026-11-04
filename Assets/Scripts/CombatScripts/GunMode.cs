@@ -117,35 +117,9 @@ public class GunMode : MonoBehaviour
         hover.getText = provider;
     }
 
-    string DebuffName(BattleColor color)
-    {
-        if (color == BattleColor.Red)
-        {
-            return "BLEED";
-        }
-        if (color == BattleColor.Yellow)
-        {
-            return "STUN";
-        }
-        return "SLOW";
-    }
-
-    string EffectText(BattleColor color)
-    {
-        if (color == BattleColor.Red)
-        {
-            return "Bleed: the enemy takes damage at the start of its turn.";
-        }
-        if (color == BattleColor.Yellow)
-        {
-            return "Stun: " + Combatant.Rules.stunHitsRequired + " hits make the enemy skip a turn.";
-        }
-        return "Slow: the enemy acts less often.";
-    }
-
     string ShootDescription()
     {
-        return "SHOOT " + CurrentColor.ToString().ToUpper() + " - " + EffectText(CurrentColor) + " Free action, " + ShotsLeft + " shots left.";
+        return "SHOOT " + CurrentColor.ToString().ToUpper() + " - " + Combatant.DebuffName(CurrentColor) + " buildup. Matching hits from every party member fill the enemy's meter. Free action, " + ShotsLeft + " shots left.";
     }
 
     string SwapDescription()
@@ -247,8 +221,8 @@ public class GunMode : MonoBehaviour
 
         BattleColor a = user.data.bulletColorA;
         BattleColor b = user.data.bulletColorB;
-        string first = (selectedSlot == 0 ? "> " : "   ") + a.ToString().ToUpper() + " (" + DebuffName(a) + ") " + user.BulletsOf(a);
-        string second = (selectedSlot == 1 ? "> " : "   ") + b.ToString().ToUpper() + " (" + DebuffName(b) + ") " + user.BulletsOf(b);
+        string first = (selectedSlot == 0 ? "> " : "   ") + a.ToString().ToUpper() + " (" + Combatant.DebuffName(a).ToUpper() + ") " + user.BulletsOf(a);
+        string second = (selectedSlot == 1 ? "> " : "   ") + b.ToString().ToUpper() + " (" + Combatant.DebuffName(b).ToUpper() + ") " + user.BulletsOf(b);
 
         shotsText.text = "SHOTS " + ShotsLeft + "/" + shotsAllowed + "\n" + first + "\n" + second;
     }
@@ -281,7 +255,7 @@ public class GunMode : MonoBehaviour
         nextShotTime = Time.time + shotCooldown;
 
         PlayShotEffects(shooter);
-        target.ApplyBullet(color);
+        BulletResult result = target.ApplyBullet(color);
 
         int damage = Mathf.Min(shotDamage, target.currentHP - 1);
         if (damage > 0)
@@ -291,7 +265,7 @@ public class GunMode : MonoBehaviour
 
         UpdateText();
 
-        Debug.Log(shooter.data.displayName + " shot " + target.name + " with " + color + " (" + DebuffName(color) + ", shots left " + ShotsLeft + ")");
+        Debug.Log(shooter.data.displayName + " shot " + target.name + " with " + color + " (" + result + ", shots left " + ShotsLeft + ")");
     }
 
     void PlayShotEffects(Combatant shooter)
