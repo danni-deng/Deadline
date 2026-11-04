@@ -3024,6 +3024,7 @@ GameObject:
   - component: {fileID: 615891162}
   - component: {fileID: 615891164}
   - component: {fileID: 615891163}
+  - component: {fileID: 615891165}
   m_Layer: 5
   m_Name: MenuRootCanvas
   m_TagString: Untagged
@@ -3144,7 +3145,7 @@ CanvasGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 615891153}
   m_Enabled: 1
-  m_Alpha: 0
+  m_Alpha: 1
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
@@ -3215,6 +3216,7 @@ MonoBehaviour:
   container: {fileID: 615891157}
   anchor: {x: 1, y: 0}
   position: {x: -700, y: 170}
+  pillWidth: 580
   keyLabel: SPACE
   actionLabel: Shoot & Build Color
   helpText: Fill the enemy's color meter. Debuff activates when full.
@@ -3243,6 +3245,26 @@ MonoBehaviour:
   panelOutline: {r: 1, g: 1, b: 1, a: 1}
   emptySegment: {r: 0.22, g: 0.22, b: 0.24, a: 1}
   resistColor: {r: 0.36, g: 0.59, b: 1, a: 1}
+--- !u!114 &615891165
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 615891153}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d970e11964f9c11428c983ce34099ab7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StatusReferencePanel
+  icons: {fileID: 0}
+  anchor: {x: 0.03, y: 1.01}
+  offset: {x: -30, y: -100}
+  toggleKey: 104
+  startCollapsed: 0
+  sortingOrder: 50
+  panelColor: {r: 0.04, g: 0.04, b: 0.05, a: 0.94}
+  outlineColor: {r: 1, g: 0.55, b: 0.7, a: 1}
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,7 +7,9 @@ public class StatusReferencePanel : MonoBehaviour
     public StatusIcons icons;
     public Vector2 anchor = new Vector2(1f, 1f);
     public Vector2 offset = new Vector2(-30f, -120f);
+    public KeyCode toggleKey = KeyCode.H;
     public bool startCollapsed = false;
+    public int sortingOrder = 50;
     public Color panelColor = new Color(0.04f, 0.04f, 0.05f, 0.94f);
     public Color outlineColor = new Color(1f, 0.55f, 0.7f);
 
@@ -28,22 +30,27 @@ public class StatusReferencePanel : MonoBehaviour
         RectTransform canvasRect = canvas.rootCanvas.GetComponent<RectTransform>();
         Vector2 topLeft = new Vector2(0f, 1f);
         Vector2 topRight = new Vector2(1f, 1f);
+        Vector2 center = new Vector2(0.5f, 0.5f);
 
         Image background = UiBuild.Panel(canvasRect, "Status Reference", anchor, anchor, offset, new Vector2(400f, 270f), panelColor);
         UiBuild.AddOutline(background, outlineColor, 3f);
         panel = background.rectTransform;
 
+        Canvas own = panel.gameObject.AddComponent<Canvas>();
+        own.overrideSorting = true;
+        own.sortingOrder = sortingOrder;
+        panel.gameObject.AddComponent<GraphicRaycaster>();
+
         UiBuild.Text(panel, "Title", topLeft, topLeft, new Vector2(22f, -12f), new Vector2(290f, 40f), 30f, TextAlignmentOptions.Left, Color.white, FontStyles.Bold).text = "Status Effects";
 
-        Image help = UiBuild.Panel(panel, "Help", topRight, topRight, new Vector2(-14f, -10f), new Vector2(44f, 44f), new Color(0.1f, 0.1f, 0.12f));
+        Image help = UiBuild.Panel(panel, "Help", topRight, topRight, new Vector2(-12f, -9f), new Vector2(48f, 48f), Color.white);
         help.raycastTarget = true;
         UiBuild.AddOutline(help, outlineColor, 2f);
         Button button = help.gameObject.AddComponent<Button>();
         button.transition = Selectable.Transition.None;
         button.onClick.AddListener(Toggle);
 
-        Vector2 center = new Vector2(0.5f, 0.5f);
-        UiBuild.Text(help.transform, "Mark", center, center, Vector2.zero, new Vector2(44f, 44f), 30f, TextAlignmentOptions.Center, Color.white, FontStyles.Bold).text = "?";
+        UiBuild.Text(help.transform, "Mark", center, center, Vector2.zero, new Vector2(48f, 48f), 34f, TextAlignmentOptions.Center, Color.black, FontStyles.Bold).text = "?";
 
         UiBuild.Panel(panel, "Divider", topLeft, topLeft, new Vector2(22f, -62f), new Vector2(356f, 2f), outlineColor);
 
@@ -64,6 +71,16 @@ public class StatusReferencePanel : MonoBehaviour
 
         collapsed = startCollapsed;
         Apply();
+
+        Debug.Log("StatusReferencePanel: built under " + canvasRect.name + ", press " + toggleKey + " or click ? to open and close it");
+    }
+
+    void Update()
+    {
+        if (panel != null && Input.GetKeyDown(toggleKey))
+        {
+            Toggle();
+        }
     }
 
     void Toggle()
