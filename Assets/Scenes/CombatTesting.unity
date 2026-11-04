@@ -779,8 +779,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 689, y: -444}
-  m_SizeDelta: {x: 185, y: 185}
+  m_AnchoredPosition: {x: 690, y: -469}
+  m_SizeDelta: {x: 130, y: 130}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &203166163
 MonoBehaviour:
@@ -795,7 +795,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.03364185, g: 0.7924528, b: 0.7483688, a: 1}
+  m_Color: {r: 0.77193844, g: 0.7830189, b: 0.7830189, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1244,8 +1244,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 40, y: 100}
-  m_SizeDelta: {x: 500, y: 140}
+  m_AnchoredPosition: {x: 13, y: 111}
+  m_SizeDelta: {x: 400, y: 130}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &283549863
 MonoBehaviour:
@@ -1373,8 +1373,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 518.1, y: -444}
-  m_SizeDelta: {x: 185, y: 185}
+  m_AnchoredPosition: {x: 844, y: -432}
+  m_SizeDelta: {x: 170, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &295541710
 MonoBehaviour:
@@ -3215,8 +3215,9 @@ MonoBehaviour:
   gunMode: {fileID: 1092224803}
   container: {fileID: 615891157}
   anchor: {x: 1, y: 0}
-  position: {x: -700, y: 170}
-  pillWidth: 580
+  position: {x: -625, y: 62}
+  pillWidth: 540
+  showHelpLine: 0
   keyLabel: SPACE
   actionLabel: Shoot & Build Color
   helpText: Fill the enemy's color meter. Debuff activates when full.
@@ -3235,8 +3236,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyStatusUI
   battleManager: {fileID: 1092224801}
   icons: {fileID: 0}
-  panelWidth: 600
-  panelHeight: 200
+  panelWidth: 560
+  panelHeight: 190
   meterWidth: 300
   miniIconSize: 40
   panelGap: 112
@@ -3261,10 +3262,10 @@ MonoBehaviour:
   anchor: {x: 0.03, y: 1.01}
   offset: {x: -30, y: -100}
   toggleKey: 104
-  startCollapsed: 0
+  startCollapsed: 1
   sortingOrder: 50
   panelColor: {r: 0.04, g: 0.04, b: 0.05, a: 0.94}
-  outlineColor: {r: 1, g: 0.55, b: 0.7, a: 1}
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -5280,8 +5281,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 860, y: -444}
-  m_SizeDelta: {x: 185, y: 185}
+  m_AnchoredPosition: {x: 865, y: -285}
+  m_SizeDelta: {x: 130, y: 130}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1213532218
 GameObject:

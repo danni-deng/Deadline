@@ -8,8 +8,9 @@ public class ShootHint : MonoBehaviour
     public GunMode gunMode;
     public RectTransform container;
     public Vector2 anchor = new Vector2(1f, 0f);
-    public Vector2 position = new Vector2(-760f, 175f);
-    public float pillWidth = 580f;
+    public Vector2 position = new Vector2(-800f, 175f);
+    public float pillWidth = 540f;
+    public bool showHelpLine = false;
     public string keyLabel = "SPACE";
     public string actionLabel = "Shoot & Build Color";
     public string helpText = "Fill the enemy's color meter. Debuff activates when full.";
@@ -34,7 +35,7 @@ public class ShootHint : MonoBehaviour
         Vector2 topCenter = new Vector2(0.5f, 1f);
         Vector2 leftCenter = new Vector2(0f, 0.5f);
 
-        RectTransform root = UiBuild.Box(parent, "Shoot Hint", anchor, center, position, new Vector2(pillWidth, 120f));
+        RectTransform root = UiBuild.Box(parent, "Shoot Hint", anchor, center, position, new Vector2(pillWidth, showHelpLine ? 120f : 64f));
         group = root.gameObject.AddComponent<CanvasGroup>();
 
         Image pill = UiBuild.Panel(root, "Pill", topCenter, topCenter, Vector2.zero, new Vector2(pillWidth, 60f), new Color(0.05f, 0.05f, 0.06f, 0.95f));
@@ -45,6 +46,9 @@ public class ShootHint : MonoBehaviour
         button.transition = Selectable.Transition.None;
         button.onClick.AddListener(OnClick);
 
+        HoverDescription hover = pill.gameObject.AddComponent<HoverDescription>();
+        hover.fixedText = helpText;
+
         Image cap = UiBuild.Panel(pill.transform, "Key", leftCenter, leftCenter, new Vector2(12f, 0f), new Vector2(120f, 40f), new Color(0.05f, 0.05f, 0.06f, 1f));
         UiBuild.AddOutline(cap, Color.white, 2f);
         UiBuild.Text(cap.transform, "KeyText", center, center, Vector2.zero, new Vector2(120f, 40f), 26f, TextAlignmentOptions.Center, Color.white, FontStyles.Bold).text = keyLabel;
@@ -52,10 +56,13 @@ public class ShootHint : MonoBehaviour
         actionText = UiBuild.Text(pill.transform, "Action", leftCenter, leftCenter, new Vector2(148f, 0f), new Vector2(pillWidth - 160f, 44f), 28f, TextAlignmentOptions.Left, actionColor, FontStyles.Bold);
         actionText.enableWordWrapping = false;
 
-        Image helpBack = UiBuild.Panel(root, "HelpBack", topCenter, topCenter, new Vector2(0f, -64f), new Vector2(pillWidth, 40f), new Color(0.05f, 0.05f, 0.06f, 0.85f));
-        TextMeshProUGUI help = UiBuild.Text(helpBack.transform, "Help", center, center, Vector2.zero, new Vector2(pillWidth - 20f, 40f), 21f, TextAlignmentOptions.Center, new Color(0.9f, 0.9f, 0.9f), FontStyles.Italic);
-        help.enableWordWrapping = false;
-        help.text = helpText;
+        if (showHelpLine)
+        {
+            Image helpBack = UiBuild.Panel(root, "HelpBack", topCenter, topCenter, new Vector2(0f, -64f), new Vector2(pillWidth, 40f), new Color(0.05f, 0.05f, 0.06f, 0.85f));
+            TextMeshProUGUI help = UiBuild.Text(helpBack.transform, "Help", center, center, Vector2.zero, new Vector2(pillWidth - 20f, 40f), 21f, TextAlignmentOptions.Center, new Color(0.9f, 0.9f, 0.9f), FontStyles.Italic);
+            help.enableWordWrapping = false;
+            help.text = helpText;
+        }
     }
 
     void OnClick()
