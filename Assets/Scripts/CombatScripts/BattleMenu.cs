@@ -9,22 +9,20 @@ public class BattleMenu : MonoBehaviour
     public BattleManager battleManager;
     public CanvasGroup menuGroup;
     public Button attackButton;
-    public Button colorStrikeButton;
     public Button ability1Button;
     public Button ability2Button;
     public TMP_Text ability1Name;
     public TMP_Text ability2Name;
     public TMP_Text ability1Cooldown;
     public TMP_Text ability2Cooldown;
-    public TMP_Text ability1Tier;
-    public TMP_Text ability2Tier;
-    public TMP_Text colorStrikeChipsText;
     public TMP_Text infoText;
     public TMP_Text promptText;
+    public string attackDescription = "Strike the selected enemy.";
     public float popTime = 0.2f;
     public float popStagger = 0.06f;
 
     bool subscribed;
+    bool hoverReady;
     List<Transform> popItems = new List<Transform>();
     List<Vector3> baseScales = new List<Vector3>();
 
@@ -38,27 +36,30 @@ public class BattleMenu : MonoBehaviour
         if (popItems.Count == 0)
         {
             AddPopItem(attackButton);
-            AddPopItem(colorStrikeButton);
             AddPopItem(ability1Button);
             AddPopItem(ability2Button);
+        }
+
+        if (!hoverReady)
+        {
+            AddHover(attackButton, AttackText);
+            AddHover(ability1Button, delegate { return AbilityText(0); });
+            AddHover(ability2Button, delegate { return AbilityText(1); });
+            hoverReady = true;
         }
 
         battleManager.StateChanged += OnStateChanged;
         battleManager.TargetChanged += OnTargetChanged;
         battleManager.AllyChanged += OnAllyChanged;
         battleManager.AllyTargetingChanged += OnTargetingChanged;
-        battleManager.StrikeChipChanged += OnStrikeChipChanged;
-        Combatant.AnyColorStateChanged += OnCombatantEvent;
-        Combatant.AnyChipsChanged += OnCombatantEvent;
+        Combatant.AnyStatusChanged += OnCombatantEvent;
         Combatant.AnyBulletsChanged += OnCombatantEvent;
+        Combatant.AnyDamaged += OnCombatantInt;
+        Combatant.AnyHealed += OnCombatantInt;
 
         attackButton.onClick.AddListener(battleManager.SubmitAttack);
         ability1Button.onClick.AddListener(battleManager.SubmitAbilityOne);
         ability2Button.onClick.AddListener(battleManager.SubmitAbilityTwo);
-        if (colorStrikeButton != null)
-        {
-            colorStrikeButton.onClick.AddListener(battleManager.SubmitColorStrike);
-        }
 
         subscribed = true;
     }
@@ -74,18 +75,14 @@ public class BattleMenu : MonoBehaviour
         battleManager.TargetChanged -= OnTargetChanged;
         battleManager.AllyChanged -= OnAllyChanged;
         battleManager.AllyTargetingChanged -= OnTargetingChanged;
-        battleManager.StrikeChipChanged -= OnStrikeChipChanged;
-        Combatant.AnyColorStateChanged -= OnCombatantEvent;
-        Combatant.AnyChipsChanged -= OnCombatantEvent;
+        Combatant.AnyStatusChanged -= OnCombatantEvent;
         Combatant.AnyBulletsChanged -= OnCombatantEvent;
+        Combatant.AnyDamaged -= OnCombatantInt;
+        Combatant.AnyHealed -= OnCombatantInt;
 
         attackButton.onClick.RemoveListener(battleManager.SubmitAttack);
         ability1Button.onClick.RemoveListener(battleManager.SubmitAbilityOne);
         ability2Button.onClick.RemoveListener(battleManager.SubmitAbilityTwo);
-        if (colorStrikeButton != null)
-        {
-            colorStrikeButton.onClick.RemoveListener(battleManager.SubmitColorStrike);
-        }
 
         subscribed = false;
     }
@@ -107,6 +104,45 @@ public class BattleMenu : MonoBehaviour
 
         popItems.Add(button.transform);
         baseScales.Add(button.transform.localScale);
+    }
+
+    void AddHover(Button button, System.Func<string> provider)
+    {
+        HoverDescription hover = button.gameObject.GetComponent<HoverDescription>();
+        if (hover == null)
+        {
+            hover = button.gameObject.AddComponent<HoverDescription>();
+        }
+        hover.getText = provider;
+    }
+
+    string AttackText()
+    {
+        return "<b>ATTACK</b>: " + attackDescription;
+    }
+
+    string AbilityText(int index)
+    {
+        Combatant user = battleManager.ActiveCombatant;
+        if (user == null || user.data == null || index >= user.data.abilities.Length || user.data.abilities[index] == null)
+        {
+            return "";
+        }
+
+        AbilityData ability = user.data.abilities[index];
+        string text = "<b>" + ability.abilityName.ToUpper() + "</b>: " + ability.description;
+
+        int cooldown = user.cooldowns[index];
+        if (cooldown > 0)
+        {
+            text += "  (ready in " + cooldown + ")";
+        }
+        else
+        {
+            text += "  (cooldown " + ability.cooldown + ")";
+        }
+
+        return text;
     }
 
     bool FieldsAreSet()
@@ -147,6 +183,11 @@ public class BattleMenu : MonoBehaviour
         menuGroup.alpha = visible ? 1f : 0f;
         menuGroup.interactable = visible;
         menuGroup.blocksRaycasts = visible;
+
+        if (!visible)
+        {
+            DescriptionBox.Hide();
+        }
     }
 
     void RestoreScales()
@@ -197,12 +238,12 @@ public class BattleMenu : MonoBehaviour
         RefreshIfPlayerTurn();
     }
 
-    void OnStrikeChipChanged(BattleColor color)
+    void OnCombatantEvent(Combatant who)
     {
         RefreshIfPlayerTurn();
     }
 
-    void OnCombatantEvent(Combatant who)
+    void OnCombatantInt(Combatant who, int amount)
     {
         RefreshIfPlayerTurn();
     }
@@ -223,28 +264,15 @@ public class BattleMenu : MonoBehaviour
             return;
         }
 
-        RefreshAbility(user, 0, ability1Button, ability1Name, ability1Cooldown, ability1Tier);
-        RefreshAbility(user, 1, ability2Button, ability2Name, ability2Cooldown, ability2Tier);
-
-        if (colorStrikeButton != null)
-        {
-            colorStrikeButton.interactable = user.TotalChips > 0;
-
-            BattleColor chipColor = battleManager.StrikeChipColor;
-            string chipLabel = "NO CHIPS";
-            if (user.TotalChips > 0)
-            {
-                chipLabel = chipColor.ToString().ToUpper() + " x" + user.chips[(int)chipColor];
-            }
-            SetText(colorStrikeChipsText, chipLabel);
-        }
+        RefreshAbility(user, 0, ability1Button, ability1Name, ability1Cooldown);
+        RefreshAbility(user, 1, ability2Button, ability2Name, ability2Cooldown);
 
         Combatant target = battleManager.SelectedTarget;
         string targetName = target != null ? target.name : "-";
         Combatant ally = battleManager.SelectedAlly;
         string allyName = ally != null ? ally.name : "-";
 
-        SetText(infoText, user.data.displayName + "   HP " + user.currentHP + "/" + user.data.maxHP + "   BULLETS " + user.bulletsLeft + "   CHIPS R" + user.chips[0] + " Y" + user.chips[1] + " B" + user.chips[2] + "\nTARGET: " + targetName);
+        SetText(infoText, user.data.displayName + "   HP " + user.currentHP + "/" + user.data.maxHP + "\nTARGET: " + targetName);
 
         if (battleManager.IsTargetingAlly)
         {
@@ -263,7 +291,7 @@ public class BattleMenu : MonoBehaviour
         }
     }
 
-    void RefreshAbility(Combatant user, int index, Button button, TMP_Text nameText, TMP_Text cooldownText, TMP_Text tierText)
+    void RefreshAbility(Combatant user, int index, Button button, TMP_Text nameText, TMP_Text cooldownText)
     {
         bool exists = index < user.data.abilities.Length && user.data.abilities[index] != null;
         button.gameObject.SetActive(exists);
@@ -275,12 +303,10 @@ public class BattleMenu : MonoBehaviour
 
         AbilityData ability = user.data.abilities[index];
         int cooldown = user.cooldowns[index];
-        int tier = Mathf.Min(user.ChipCount(ability), 3);
 
         button.interactable = user.AbilityReady(index);
         SetText(nameText, ability.abilityName);
         SetText(cooldownText, cooldown > 0 ? cooldown.ToString() : "");
-        SetText(tierText, "LV " + tier);
     }
 
     IEnumerator Pop()

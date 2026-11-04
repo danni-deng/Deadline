@@ -12,18 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c70e618533d8db1479e6c4568f87670d, type: 3}
   m_Name: Dockman
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
-  displayName: DockMan
+  displayName: Dockman
   portrait: {fileID: 0}
   maxHP: 30
   attack: 4
   defense: 10
-  speed: 4
-  healAmount: 8
-  maxHeals: 3
+  speed: 100
   bulletColorA: 2
   bulletColorB: 1
-  startingBullets: 40
-  startingColors: 
+  bulletsPerColor: 40
+  shotsPerTurn: 5
+  stunExtraHits: 0
+  debuffEffectiveness: 1
   abilities:
   - {fileID: 11400000, guid: 1b51e63de57403749944d2f0c43d8dab, type: 2}
   - {fileID: 11400000, guid: 7c805aaabc9a2f046a5096c5588ef8a1, type: 2}

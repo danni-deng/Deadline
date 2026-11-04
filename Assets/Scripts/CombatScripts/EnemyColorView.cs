@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class EnemyColorView : MonoBehaviour
@@ -6,14 +7,20 @@ public class EnemyColorView : MonoBehaviour
     public Combatant combatant;
     public SpriteRenderer[] renderers;
     public bool convertToGray = true;
-    public Color grayTint = new Color(0.75f, 0.75f, 0.75f);
-    public Color orange = new Color(1f, 0.55f, 0.1f);
-    public Color green = new Color(0.3f, 0.8f, 0.3f);
-    public Color purple = new Color(0.6f, 0.25f, 0.8f);
-    public Color allColors = new Color(0.55f, 0.4f, 0.3f);
-    public float progressStrength = 0.15f;
+    public bool tintSprite = true;
+    public bool showHp = true;
+    public Color baseTint = new Color(0.85f, 0.85f, 0.85f);
+    public float fontSize = 4f;
+    public float heightOffset = 0.25f;
+    public string sortingLayerName = "Default";
+    public int sortingOrder = 300;
 
     static Dictionary<Sprite, Sprite> cache = new Dictionary<Sprite, Sprite>();
+
+    GameObject labelObject;
+    TextMeshPro label;
+    Camera cam;
+    bool dirty = true;
 
     void Awake()
     {
@@ -36,28 +43,66 @@ public class EnemyColorView : MonoBehaviour
                 }
             }
         }
+
+        labelObject = new GameObject("Status " + name);
+        label = labelObject.AddComponent<TextMeshPro>();
+        label.rectTransform.pivot = new Vector2(0.5f, 0f);
+        label.rectTransform.sizeDelta = new Vector2(10f, 4f);
+        label.alignment = TextAlignmentOptions.Bottom;
+        label.fontSize = fontSize;
+        label.fontStyle = FontStyles.Bold;
+        label.richText = true;
+        label.sortingLayerID = SortingLayer.NameToID(sortingLayerName);
+        label.sortingOrder = sortingOrder;
+        label.text = "";
     }
 
     void OnEnable()
     {
-        Combatant.AnyColorStateChanged += OnColorStateChanged;
+        if (labelObject != null)
+        {
+            labelObject.SetActive(true);
+        }
+
+        Combatant.AnyStatusChanged += OnStatus;
+        Combatant.AnyDamaged += OnDamage;
+        Combatant.AnyHealed += OnDamage;
+        dirty = true;
     }
 
     void OnDisable()
     {
-        Combatant.AnyColorStateChanged -= OnColorStateChanged;
+        Combatant.AnyStatusChanged -= OnStatus;
+        Combatant.AnyDamaged -= OnDamage;
+        Combatant.AnyHealed -= OnDamage;
+
+        if (labelObject != null)
+        {
+            labelObject.SetActive(false);
+        }
     }
 
-    void Start()
+    void OnDestroy()
     {
-        Refresh();
+        if (labelObject != null)
+        {
+            Destroy(labelObject);
+        }
     }
 
-    void OnColorStateChanged(Combatant who)
+    void OnStatus(Combatant who)
     {
         if (who == combatant)
         {
-            Refresh();
+            dirty = true;
+        }
+    }
+
+    void OnDamage(Combatant who, int amount)
+    {
+        if (who == combatant)
+        {
+            dirty = true;
         }
     }
 
@@ -128,81 +173,112 @@ public class EnemyColorView : MonoBehaviour
         return result;
     }
 
-    void Refresh()
+    void LateUpdate()
     {
-        if (combatant == null)
+        if (combatant == null || combatant.data == null)
         {
             return;
         }
 
-        Color tint = BaseTint();
-
-        int best = -1;
-        int bestProgress = 0;
-        for (int i = 0; i < 3; i++)
+        if (cam == null)
         {
-            if (combatant.colorProgress[i] > bestProgress)
-            {
-                bestProgress = combatant.colorProgress[i];
-                best = i;
-            }
+            cam = Camera.main;
         }
 
-        if (best >= 0)
+        if (dirty)
         {
-            Color next = BattleColorUtil.ToUnityColor((BattleColor)best);
-            tint = Color.Lerp(tint, next, bestProgress * progressStrength);
+            Refresh();
         }
+
+        Bounds bounds = new Bounds(transform.position, Vector3.zero);
+        bool hasBounds = false;
 
         foreach (SpriteRenderer sr in renderers)
         {
-            if (sr != null)
+            if (sr == null)
             {
-                sr.color = tint;
+                continue;
             }
+
+            if (!hasBounds)
+            {
+                bounds = sr.bounds;
+                hasBounds = true;
+            }
+            else
+            {
+                bounds.Encapsulate(sr.bounds);
+            }
+        }
+
+        labelObject.transform.position = new Vector3(bounds.center.x, bounds.max.y + heightOffset, transform.position.z);
+
+        if (cam != null)
+        {
+            labelObject.transform.rotation = cam.transform.rotation;
         }
     }
 
-    Color BaseTint()
+    void Refresh()
     {
-        bool red = combatant.HasColor(BattleColor.Red);
-        bool yellow = combatant.HasColor(BattleColor.Yellow);
-        bool blue = combatant.HasColor(BattleColor.Blue);
+        dirty = false;
 
-        int count = 0;
-        if (red) { count++; }
-        if (yellow) { count++; }
-        if (blue) { count++; }
+        string text = "";
 
-        if (count == 0)
+        if (showHp)
         {
-            return grayTint;
+            text += "<color=#CCCCCC>" + combatant.currentHP + "/" + combatant.data.maxHP + "</color>\n";
         }
-        if (count == 3)
+
+        if (combatant.bleedStacks > 0)
         {
-            return allColors;
+            text += "<color=#FF5A4D>BLEED x" + combatant.bleedStacks + "  -" + combatant.BleedDamagePerTick + " HP</color>\n";
         }
-        if (count == 1)
+
+        if (combatant.stunned)
         {
-            if (red)
+            text += "<color=#FFD84A>STUNNED</color>\n";
+        }
+        else if (combatant.stunImmuneTurns > 0)
+        {
+            text += "<color=#9A8A3A>STUN RESIST " + combatant.stunImmuneTurns + "</color>\n";
+        }
+        else if (combatant.stunBuildup > 0)
+        {
+            text += "<color=#FFD84A>STUN " + combatant.stunBuildup + "/" + combatant.StunThreshold + "</color>\n";
+        }
+
+        if (combatant.slowStacks > 0)
+        {
+            text += "<color=#5C97FF>SLOW -" + Mathf.RoundToInt(combatant.SlowPercent * 100f) + "%</color>\n";
+        }
+
+        label.text = text.TrimEnd('\n');
+
+        if (tintSprite)
+        {
+            Color tint = baseTint;
+
+            if (combatant.bleedStacks > 0)
             {
-                return BattleColorUtil.ToUnityColor(BattleColor.Red);
+                tint = Color.Lerp(tint, BattleColorUtil.ToUnityColor(BattleColor.Red), Mathf.Min(0.6f, 0.12f * combatant.bleedStacks));
             }
-            if (yellow)
+            if (combatant.slowStacks > 0)
             {
-                return BattleColorUtil.ToUnityColor(BattleColor.Yellow);
+                tint = Color.Lerp(tint, BattleColorUtil.ToUnityColor(BattleColor.Blue), Mathf.Min(0.6f, 0.15f * combatant.slowStacks));
             }
-            return BattleColorUtil.ToUnityColor(BattleColor.Blue);
-        }
+            if (combatant.stunned)
+            {
+                tint = Color.Lerp(tint, BattleColorUtil.ToUnityColor(BattleColor.Yellow), 0.6f);
+            }
 
-        if (red && yellow)
-        {
-            return orange;
+            foreach (SpriteRenderer sr in renderers)
+            {
+                if (sr != null)
+                {
+                    sr.color = tint;
+                }
+            }
         }
-        if (red && blue)
-        {
-            return purple;
-        }
-        return green;
     }
 }

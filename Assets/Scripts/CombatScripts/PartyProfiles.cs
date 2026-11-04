@@ -7,7 +7,6 @@ public class PartyProfiles : MonoBehaviour
 {
     class Card
     {
-        
         public Combatant combatant;
         public RectTransform rect;
         public Image background;
@@ -16,27 +15,22 @@ public class PartyProfiles : MonoBehaviour
         public RectTransform hpFill;
         public Outline outline;
         public bool picked;
-        public RectTransform[] pipRects = new RectTransform[3];
-        public Image[] pipImages = new Image[3];
-        public TMP_Text[] pipTexts = new TMP_Text[3];
-        public Outline[] pipOutlines = new Outline[3];
-        public float[] popTimers = new float[3];
+        public Image[] pipImages = new Image[2];
+        public TMP_Text[] pipTexts = new TMP_Text[2];
     }
 
-    public Sprite chipSprite;
     public BattleManager battleManager;
     public RectTransform container;
     public float cardSize = 120f;
-    public float pipSize = 30f;
+    public float pipSize = 40f;
     public float spacing = 16f;
     public Color cardColor = new Color(0.08f, 0.08f, 0.08f);
     public Color deadColor = new Color(0.3f, 0.3f, 0.3f);
     public Color activeOutline = Color.white;
     public Color pickOutline = new Color(0.6f, 0.9f, 1f);
-    public Color hpColor = new Color(0.2f, 0.85f, 0.3f);
+    public Color hpColor = new Color(0.9f, 0.9f, 0.9f);
     public float pulseAmount = 0.05f;
     public float pulseSpeed = 6f;
-    public float popDuration = 0.5f;
 
     List<Card> cards = new List<Card>();
     TMP_Text prompt;
@@ -53,12 +47,10 @@ public class PartyProfiles : MonoBehaviour
         battleManager.StateChanged += OnStateChanged;
         battleManager.AllyChanged += OnAllyChanged;
         battleManager.AllyTargetingChanged += OnTargetingChanged;
-        battleManager.StrikeChipChanged += OnStrikeChipChanged;
         Combatant.AnyDamaged += OnCombatantInt;
         Combatant.AnyHealed += OnCombatantInt;
-        Combatant.AnyChipsChanged += OnCombatant;
+        Combatant.AnyBulletsChanged += OnCombatant;
         Combatant.AnyDied += OnCombatant;
-        Combatant.AnyColorGained += OnColorGained;
     }
 
     void OnDisable()
@@ -72,19 +64,17 @@ public class PartyProfiles : MonoBehaviour
         battleManager.StateChanged -= OnStateChanged;
         battleManager.AllyChanged -= OnAllyChanged;
         battleManager.AllyTargetingChanged -= OnTargetingChanged;
-        battleManager.StrikeChipChanged -= OnStrikeChipChanged;
         Combatant.AnyDamaged -= OnCombatantInt;
         Combatant.AnyHealed -= OnCombatantInt;
-        Combatant.AnyChipsChanged -= OnCombatant;
+        Combatant.AnyBulletsChanged -= OnCombatant;
         Combatant.AnyDied -= OnCombatant;
-        Combatant.AnyColorGained -= OnColorGained;
     }
 
     void Start()
     {
         if (battleManager == null || container == null)
         {
-   
+            Debug.LogError("PartyProfiles: assign the battle manager and the container");
             enabled = false;
             return;
         }
@@ -113,18 +103,6 @@ public class PartyProfiles : MonoBehaviour
         foreach (Card card in cards)
         {
             card.rect.localScale = card.picked ? Vector3.one * pulse : Vector3.one;
-
-            for (int i = 0; i < 3; i++)
-            {
-                float scale = 1f;
-                if (card.popTimers[i] > 0f)
-                {
-                    card.popTimers[i] -= Time.unscaledDeltaTime;
-                    float p = Mathf.Clamp01(card.popTimers[i] / popDuration);
-                    scale = 1f + 0.6f * Mathf.Sin(p * Mathf.PI);
-                }
-                card.pipRects[i].localScale = Vector3.one * scale;
-            }
         }
     }
 
@@ -148,11 +126,6 @@ public class PartyProfiles : MonoBehaviour
         dirty = true;
     }
 
-    void OnStrikeChipChanged(BattleColor color)
-    {
-        dirty = true;
-    }
-
     void OnCombatant(Combatant c)
     {
         dirty = true;
@@ -160,18 +133,6 @@ public class PartyProfiles : MonoBehaviour
 
     void OnCombatantInt(Combatant c, int amount)
     {
-        dirty = true;
-    }
-
-    void OnColorGained(Combatant enemy, Combatant shooter, BattleColor color)
-    {
-        foreach (Card card in cards)
-        {
-            if (card.combatant == shooter)
-            {
-                card.popTimers[(int)color] = popDuration;
-            }
-        }
         dirty = true;
     }
 
@@ -266,44 +227,29 @@ public class PartyProfiles : MonoBehaviour
         fillImage.raycastTarget = false;
         card.hpFill = fillRect;
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 2; i++)
         {
-            GameObject pip = new GameObject("Chip " + i, typeof(RectTransform), typeof(Image), typeof(Button));
+            GameObject pip = new GameObject("Bullets " + i, typeof(RectTransform), typeof(Image));
             pip.transform.SetParent(root.transform, false);
 
             RectTransform pipRect = pip.GetComponent<RectTransform>();
             pipRect.anchorMin = new Vector2(0f, 1f);
             pipRect.anchorMax = new Vector2(0f, 1f);
             pipRect.pivot = new Vector2(0.5f, 0.5f);
-            pipRect.sizeDelta = new Vector2(pipSize, pipSize);
-            pipRect.anchoredPosition = new Vector2(8f + pipSize * 0.5f + i * (pipSize + 4f), -(6f + pipSize * 0.5f));
-            card.pipRects[i] = pipRect;
+            pipRect.sizeDelta = new Vector2(pipSize, pipSize * 0.7f);
+            pipRect.anchoredPosition = new Vector2(8f + pipSize * 0.5f + i * (pipSize + 6f), -(6f + pipSize * 0.35f));
 
-         card.pipImages[i] = pip.GetComponent<Image>();
-         card.pipImages[i].sprite = chipSprite;
-         card.pipImages[i].type = Image.Type.Simple;
-         card.pipImages[i].preserveAspect = true;
-          card.pipImages[i].color = BattleColorUtil.ToUnityColor((BattleColor)i);
-
-            Button pipButton = pip.GetComponent<Button>();
-            pipButton.transition = Selectable.Transition.None;
-            int colorIndex = i;
-            pipButton.onClick.AddListener(delegate { ClickPip(captured, colorIndex); });
-
-            Outline pipOutline = pip.AddComponent<Outline>();
-            pipOutline.effectColor = Color.white;
-            pipOutline.effectDistance = new Vector2(3f, -3f);
-            pipOutline.enabled = false;
-            card.pipOutlines[i] = pipOutline;
+            card.pipImages[i] = pip.GetComponent<Image>();
+            card.pipImages[i].raycastTarget = false;
 
             GameObject countObject = new GameObject("Count", typeof(RectTransform), typeof(TextMeshProUGUI));
             countObject.transform.SetParent(pip.transform, false);
             Stretch(countObject.GetComponent<RectTransform>(), 0f, 0f, 0f, 0f);
             TextMeshProUGUI countText = countObject.GetComponent<TextMeshProUGUI>();
             countText.alignment = TextAlignmentOptions.Center;
-            countText.fontSize = 20f;
+            countText.fontSize = 18f;
             countText.fontStyle = FontStyles.Bold;
-            countText.color = i == (int)BattleColor.Yellow ? Color.black : Color.white;
+            countText.color = Color.black;
             countText.raycastTarget = false;
             countText.text = "";
             card.pipTexts[i] = countText;
@@ -357,20 +303,6 @@ public class PartyProfiles : MonoBehaviour
         battleManager.ConfirmAllyTarget();
     }
 
-    void ClickPip(Combatant owner, int colorIndex)
-    {
-        if (battleManager.IsTargetingAlly)
-        {
-            Pick(owner);
-            return;
-        }
-
-        if (owner == battleManager.ActiveCombatant)
-        {
-            battleManager.SelectStrikeChip((BattleColor)colorIndex);
-        }
-    }
-
     void Refresh()
     {
         dirty = false;
@@ -400,17 +332,15 @@ public class PartyProfiles : MonoBehaviour
             card.outline.enabled = isActive || card.picked;
             card.outline.effectColor = card.picked ? pickOutline : activeOutline;
 
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 2; i++)
             {
-                int count = c.chips[i];
+                BattleColor color = i == 0 ? c.data.bulletColorA : c.data.bulletColorB;
+                int count = c.BulletsOf(color);
 
-                Color pipColor = BattleColorUtil.ToUnityColor((BattleColor)i);
+                Color pipColor = BattleColorUtil.ToUnityColor(color);
                 pipColor.a = count > 0 ? 1f : 0.25f;
                 card.pipImages[i].color = pipColor;
-                card.pipTexts[i].text = count > 0 ? count.ToString() : "";
-
-                bool chosen = isActive && playerTurn && count > 0 && (int)battleManager.StrikeChipColor == i;
-                card.pipOutlines[i].enabled = chosen;
+                card.pipTexts[i].text = count.ToString();
             }
         }
 

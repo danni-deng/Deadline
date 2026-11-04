@@ -6,7 +6,6 @@ public enum StatusType
 {
     AttackUp,
     DefenseUp,
-    DefenseDown,
     Regen,
     SpeedUp
 }
@@ -21,24 +20,30 @@ public class StatusEffect
 
 public class Combatant : MonoBehaviour
 {
+    public const float TurnDistance = 100f;
+
+    public static DebuffRules Rules = new DebuffRules();
+
     public static event Action<Combatant, int> AnyDamaged;
     public static event Action<Combatant, int> AnyHealed;
     public static event Action<Combatant> AnyDied;
-    public static event Action<Combatant> AnyColorStateChanged;
-    public static event Action<Combatant, Combatant, BattleColor> AnyColorGained;
-    public static event Action<Combatant> AnyChipsChanged;
+    public static event Action<Combatant> AnyStatusChanged;
     public static event Action<Combatant> AnyBulletsChanged;
 
     public CombatantData data;
     public bool isPlayerSide;
     public int currentHP;
-    public int shotsToColor = 5;
     public float hideDelay = 0.4f;
+    public float charge;
+    public int bonusShots;
 
     public int[] bullets = new int[3];
-    public int[] chips = new int[3];
-    public int[] colorProgress = new int[3];
-    public List<BattleColor> colors = new List<BattleColor>();
+    public int bleedStacks;
+    public int slowStacks;
+    public int stunBuildup;
+    public bool stunned;
+    public int stunImmuneTurns;
+
     public int[] cooldowns = new int[0];
     public List<StatusEffect> effects = new List<StatusEffect>();
 
@@ -47,9 +52,43 @@ public class Combatant : MonoBehaviour
         get { return currentHP > 0; }
     }
 
+    public float SlowPercent
+    {
+        get { return Mathf.Clamp(slowStacks * Rules.slowPerStack * data.debuffEffectiveness, 0f, 0.9f); }
+    }
+
+    public float EffectiveSpeed
+    {
+        get
+        {
+            float speed = data.speed * (1f + SumEffects(StatusType.SpeedUp));
+            speed *= 1f - SlowPercent;
+            return Mathf.Max(1f, speed);
+        }
+    }
+
     public int Speed
     {
-        get { return Mathf.Max(1, Mathf.RoundToInt(data.speed * (1f + SumEffects(StatusType.SpeedUp)))); }
+        get { return Mathf.RoundToInt(EffectiveSpeed); }
+    }
+
+    public int StunThreshold
+    {
+        get { return Rules.stunHitsRequired + data.stunExtraHits; }
+    }
+
+    public int BleedDamagePerTick
+    {
+        get
+        {
+            if (bleedStacks <= 0)
+            {
+                return 0;
+            }
+
+            float percent = Rules.bleedPercentPerStack * data.debuffEffectiveness;
+            return Mathf.Max(1, Mathf.RoundToInt(data.maxHP * percent * bleedStacks));
+        }
     }
 
     public float AttackMultiplier
@@ -59,7 +98,7 @@ public class Combatant : MonoBehaviour
 
     public float DefenseMultiplier
     {
-        get { return Mathf.Max(0.25f, 1f + SumEffects(StatusType.DefenseUp) - SumEffects(StatusType.DefenseDown)); }
+        get { return Mathf.Max(0.25f, 1f + SumEffects(StatusType.DefenseUp)); }
     }
 
     public int bulletsLeft
@@ -70,19 +109,6 @@ public class Combatant : MonoBehaviour
             for (int i = 0; i < bullets.Length; i++)
             {
                 total += bullets[i];
-            }
-            return total;
-        }
-    }
-
-    public int TotalChips
-    {
-        get
-        {
-            int total = 0;
-            for (int i = 0; i < chips.Length; i++)
-            {
-                total += chips[i];
             }
             return total;
         }
@@ -102,20 +128,30 @@ public class Combatant : MonoBehaviour
         bullets = new int[3];
         bullets[(int)data.bulletColorA] = data.bulletsPerColor;
         bullets[(int)data.bulletColorB] = data.bulletsPerColor;
-        chips = new int[3];
-        colorProgress = new int[3];
-        colors = new List<BattleColor>(data.startingColors);
+        bonusShots = 0;
+        charge = TurnDistance * Rules.startCharge;
+        bleedStacks = 0;
+        slowStacks = 0;
+        stunBuildup = 0;
+        stunned = false;
+        stunImmuneTurns = 0;
         cooldowns = new int[data.abilities.Length];
         effects = new List<StatusEffect>();
 
-        if (AnyColorStateChanged != null)
+        NotifyStatus();
+        NotifyBullets();
+    }
+
+    void NotifyStatus()
+    {
+        if (AnyStatusChanged != null)
         {
-            AnyColorStateChanged(this);
+            AnyStatusChanged(this);
         }
-        if (AnyChipsChanged != null)
-        {
-            AnyChipsChanged(this);
-        }
+    }
+
+    void NotifyBullets()
+    {
         if (AnyBulletsChanged != null)
         {
             AnyBulletsChanged(this);
@@ -131,21 +167,6 @@ public class Combatant : MonoBehaviour
             {
                 total += e.amount;
             }
-        }
-        return total;
-    }
-
-    public int ChipCount(AbilityData ability)
-    {
-        if (ability.anyColor)
-        {
-            return TotalChips;
-        }
-
-        int total = 0;
-        foreach (BattleColor c in ability.stackColors)
-        {
-            total += chips[(int)c];
         }
         return total;
     }
@@ -175,6 +196,7 @@ public class Combatant : MonoBehaviour
             if (e.type == type && Mathf.Approximately(e.amount, amount))
             {
                 e.turnsLeft = Mathf.Max(e.turnsLeft, turns);
+                NotifyStatus();
                 return;
             }
         }
@@ -184,6 +206,7 @@ public class Combatant : MonoBehaviour
         fresh.amount = amount;
         fresh.turnsLeft = turns;
         effects.Add(fresh);
+        NotifyStatus();
     }
 
     public void ReduceCooldowns(int amount, AbilityData except)
@@ -198,53 +221,55 @@ public class Combatant : MonoBehaviour
         }
     }
 
-    public void ResetShortestCooldown(AbilityData except)
+    public int BulletsOf(BattleColor color)
     {
-        int bestIndex = -1;
-
-        for (int i = 0; i < cooldowns.Length; i++)
-        {
-            if (data.abilities[i] == except)
-            {
-                continue;
-            }
-            if (cooldowns[i] > 0 && (bestIndex < 0 || cooldowns[i] < cooldowns[bestIndex]))
-            {
-                bestIndex = i;
-            }
-        }
-
-        if (bestIndex >= 0)
-        {
-            cooldowns[bestIndex] = 0;
-        }
+        return bullets[(int)color];
     }
 
-    public void AddChip(BattleColor color)
+    public bool UseBullet(BattleColor color)
     {
-        chips[(int)color]++;
-        Debug.Log(name + " gained a " + color + " chip (now " + chips[(int)color] + ")");
-
-        if (AnyChipsChanged != null)
-        {
-            AnyChipsChanged(this);
-        }
-    }
-
-    public bool SpendChip(BattleColor color)
-    {
-        if (chips[(int)color] <= 0)
+        if (bullets[(int)color] <= 0)
         {
             return false;
         }
 
-        chips[(int)color]--;
-
-        if (AnyChipsChanged != null)
-        {
-            AnyChipsChanged(this);
-        }
+        bullets[(int)color]--;
+        NotifyBullets();
         return true;
+    }
+
+    public void ApplyBullet(BattleColor color)
+    {
+        if (color == BattleColor.Red)
+        {
+            bleedStacks = Mathf.Min(Rules.maxBleedStacks, bleedStacks + 1);
+        }
+        else if (color == BattleColor.Yellow)
+        {
+            if (!stunned && stunImmuneTurns <= 0)
+            {
+                stunBuildup++;
+                if (stunBuildup >= StunThreshold)
+                {
+                    stunBuildup = 0;
+                    stunned = true;
+                }
+            }
+        }
+        else
+        {
+            slowStacks = Mathf.Min(Rules.maxSlowStacks, slowStacks + 1);
+        }
+
+        NotifyStatus();
+    }
+
+    public void ConsumeStun()
+    {
+        stunned = false;
+        stunBuildup = 0;
+        stunImmuneTurns = Rules.stunImmuneTurns;
+        NotifyStatus();
     }
 
     public void OnTurnStart()
@@ -264,6 +289,20 @@ public class Combatant : MonoBehaviour
                 HealBy(Mathf.RoundToInt(data.maxHP * e.amount));
             }
         }
+
+        if (stunImmuneTurns > 0)
+        {
+            stunImmuneTurns--;
+            NotifyStatus();
+        }
+
+        if (bleedStacks > 0)
+        {
+            int damage = BleedDamagePerTick;
+            bleedStacks = Mathf.Max(0, bleedStacks - Rules.bleedDecayPerTurn);
+            NotifyStatus();
+            TakeDamage(damage);
+        }
     }
 
     public void OnTurnEnd()
@@ -276,68 +315,13 @@ public class Combatant : MonoBehaviour
                 effects.RemoveAt(i);
             }
         }
-    }
 
-    public bool HasColor(BattleColor color)
-    {
-        return colors.Contains(color);
-    }
-
-    public bool HasAnyColor(BattleColor a, BattleColor b)
-    {
-        return colors.Contains(a) || colors.Contains(b);
-    }
-
-    public int BulletsOf(BattleColor color)
-    {
-        return bullets[(int)color];
-    }
-
-    public bool UseBullet(BattleColor color)
-    {
-        if (bullets[(int)color] <= 0)
+        if (slowStacks > 0)
         {
-            return false;
+            slowStacks = Mathf.Max(0, slowStacks - Rules.slowDecayPerTurn);
         }
 
-        bullets[(int)color]--;
-
-        if (AnyBulletsChanged != null)
-        {
-            AnyBulletsChanged(this);
-        }
-        return true;
-    }
-
-    public bool ApplyShot(BattleColor color, Combatant shooter)
-    {
-        if (HasColor(color))
-        {
-            return true;
-        }
-
-        int index = (int)color;
-        colorProgress[index]++;
-
-        if (colorProgress[index] >= shotsToColor)
-        {
-            colorProgress[index] = 0;
-            colors.Add(color);
-            Debug.Log(name + " turned " + color);
-            shooter.AddChip(color);
-
-            if (AnyColorGained != null)
-            {
-                AnyColorGained(this, shooter, color);
-            }
-        }
-
-        if (AnyColorStateChanged != null)
-        {
-            AnyColorStateChanged(this);
-        }
-
-        return false;
+        NotifyStatus();
     }
 
     public void TakeDamage(int amount)

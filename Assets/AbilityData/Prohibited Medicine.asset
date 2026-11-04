@@ -13,96 +13,19 @@ MonoBehaviour:
   m_Name: Prohibited Medicine
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
   abilityName: Prohibited Medicine
+  description: Heal an ally for 20% HP and give them +40% speed for 2 turns.
   target: 2
   cooldown: 2
-  anyColor: 1
-  stackColors: 
-  tiers:
-  - note: Tier 0
-    damagePower: 0
-    critChance: 0
-    critMultiplier: 2.5
-    missingHpBonus: 0
-    selfDamagePercent: 0
-    healPercent: 0.2
-    regenPercent: 0
-    regenTurns: 0
-    attackBoost: 0
-    defenseBoost: 0
-    speedBoost: 0.4
-    buffTurns: 2
-    defenseDropChance: 0
-    defenseDropPercent: 0.2
-    defenseDropTurns: 2
-    cooldownReduction: 0
-    resetShortestCooldown: 0
-    grantStack: 0
-    stackColor: 0
-    hitAllAllies: 0
-    extraTurn: 0
-  - note: Tier 1
-    damagePower: 0
-    critChance: 0
-    critMultiplier: 2.5
-    missingHpBonus: 0
-    selfDamagePercent: 0
-    healPercent: 0.4
-    regenPercent: 0
-    regenTurns: 0
-    attackBoost: 0
-    defenseBoost: 0
-    speedBoost: 0.4
-    buffTurns: 2
-    defenseDropChance: 0
-    defenseDropPercent: 0.2
-    defenseDropTurns: 2
-    cooldownReduction: 0
-    resetShortestCooldown: 0
-    grantStack: 0
-    stackColor: 0
-    hitAllAllies: 0
-    extraTurn: 0
-  - note: Tier 2
-    damagePower: 0
-    critChance: 0
-    critMultiplier: 2.5
-    missingHpBonus: 0
-    selfDamagePercent: 0
-    healPercent: 0.4
-    regenPercent: 0
-    regenTurns: 0
-    attackBoost: 0
-    defenseBoost: 0
-    speedBoost: 0.6
-    buffTurns: 2
-    defenseDropChance: 0
-    defenseDropPercent: 0.2
-    defenseDropTurns: 2
-    cooldownReduction: 0
-    resetShortestCooldown: 0
-    grantStack: 0
-    stackColor: 0
-    hitAllAllies: 0
-    extraTurn: 0
-  - note: Tier 3
-    damagePower: 0
-    critChance: 0
-    critMultiplier: 2.5
-    missingHpBonus: 0
-    selfDamagePercent: 0
-    healPercent: 0.4
-    regenPercent: 0
-    regenTurns: 0
-    attackBoost: 0
-    defenseBoost: 0
-    speedBoost: 0.6
-    buffTurns: 2
-    defenseDropChance: 0
-    defenseDropPercent: 0.2
-    defenseDropTurns: 2
-    cooldownReduction: 0
-    resetShortestCooldown: 0
-    grantStack: 1
-    stackColor: 1
-    hitAllAllies: 0
-    extraTurn: 0
+  damagePower: 0
+  critChance: 0
+  critMultiplier: 2.5
+  selfDamagePercent: 0
+  healPercent: 0.2
+  regenPercent: 0
+  regenTurns: 0
+  attackBoost: 0
+  defenseBoost: 0
+  speedBoost: 0.4
+  buffTurns: 2
+  cooldownReduction: 0
+  bonusShots: 0

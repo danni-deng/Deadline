@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewCombatant", menuName = "Battle/Combatant Data")]
@@ -9,15 +8,15 @@ public class CombatantData : ScriptableObject
     public int maxHP = 20;
     public int attack = 6;
     public int defense = 0;
-    public int speed = 5;
-    public int healAmount = 8;
-    public int maxHeals = 3;
+    public int speed = 100;
 
     public BattleColor bulletColorA = BattleColor.Red;
     public BattleColor bulletColorB = BattleColor.Yellow;
     public int bulletsPerColor = 40;
     public int shotsPerTurn = 5;
 
-    public List<BattleColor> startingColors = new List<BattleColor>();
+    public int stunExtraHits = 0;
+    public float debuffEffectiveness = 1f;
+
     public AbilityData[] abilities = new AbilityData[0];
 }
