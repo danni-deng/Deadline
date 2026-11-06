@@ -14,6 +14,8 @@ public class PartyHighlight : MonoBehaviour
     public bool clickToSelectAlly = true;
 
     Vector3 ringBaseScale = Vector3.one;
+    Combatant lastHovered;
+    bool wasTargeting;
 
     void Awake()
     {
@@ -26,15 +28,23 @@ public class PartyHighlight : MonoBehaviour
     void Update()
     {
         bool playerTurn = battleManager.State == BattleState.PlayerTurn;
+        bool targeting = playerTurn && battleManager.IsTargetingAlly;
         Combatant active = battleManager.ActiveCombatant;
         Combatant ally = battleManager.SelectedAlly;
 
         UpdateRing(playerTurn && active != null && active.IsAlive, active);
-        UpdateArrow(playerTurn && ally != null && ally.IsAlive && ally != active, ally);
+        UpdateArrow(targeting && ally != null && ally.IsAlive, ally);
 
-        if (clickToSelectAlly && playerTurn && Input.GetMouseButtonDown(0))
+        if (!targeting)
         {
-            TrySelectByClick();
+            wasTargeting = false;
+            lastHovered = null;
+            return;
+        }
+
+        if (clickToSelectAlly)
+        {
+            HandlePointer();
         }
     }
 
@@ -132,17 +142,17 @@ public class PartyHighlight : MonoBehaviour
         allyArrow.sortingOrder = maxOrder + 1;
     }
 
-    void TrySelectByClick()
+    Combatant PickUnderPointer()
     {
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
         {
-            return;
+            return null;
         }
 
         Camera cam = Camera.main;
         if (cam == null)
         {
-            return;
+            return null;
         }
 
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
@@ -150,22 +160,55 @@ public class PartyHighlight : MonoBehaviour
 
         if (hit.collider == null)
         {
-            return;
+            return null;
         }
 
-        Combatant clicked = hit.collider.GetComponentInParent<Combatant>();
-        if (clicked == null || !clicked.isPlayerSide || !clicked.IsAlive)
+        Combatant found = hit.collider.GetComponentInParent<Combatant>();
+        if (found == null || !found.isPlayerSide || !found.IsAlive)
         {
-            return;
+            return null;
         }
 
+        return found;
+    }
+
+    void SelectAlly(Combatant c)
+    {
         for (int i = 0; i < battleManager.party.Count; i++)
         {
-            if (battleManager.SelectedAlly == clicked)
+            if (battleManager.SelectedAlly == c)
             {
                 return;
             }
             battleManager.CycleAlly(1);
+        }
+    }
+
+    void HandlePointer()
+    {
+        Combatant hovered = PickUnderPointer();
+
+        if (!wasTargeting)
+        {
+            wasTargeting = true;
+            lastHovered = hovered;
+        }
+        else if (hovered != lastHovered)
+        {
+            lastHovered = hovered;
+            if (hovered != null)
+            {
+                SelectAlly(hovered);
+            }
+        }
+
+        if (Input.GetMouseButtonDown(0) && hovered != null)
+        {
+            SelectAlly(hovered);
+            if (battleManager.SelectedAlly == hovered)
+            {
+                battleManager.ConfirmAllyTarget();
+            }
         }
     }
 }

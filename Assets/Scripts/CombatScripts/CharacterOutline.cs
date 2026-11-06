@@ -96,15 +96,16 @@ public class CharacterOutline : MonoBehaviour
         BattleState state = battleManager.State;
         bool playerTurn = state == BattleState.PlayerTurn;
         bool acting = playerTurn || state == BattleState.Resolving;
+        bool pickingAlly = playerTurn && battleManager.IsTargetingAlly;
 
+        if (highlightWhenAllySelected && pickingAlly && battleManager.SelectedAlly == combatant)
+        {
+            color = allyColor;
+            return true;
+        }
         if (highlightWhenActive && acting && battleManager.ActiveCombatant == combatant)
         {
             color = activeColor;
-            return true;
-        }
-        if (highlightWhenAllySelected && playerTurn && battleManager.SelectedAlly == combatant)
-        {
-            color = allyColor;
             return true;
         }
         if (highlightWhenTargeted && playerTurn && battleManager.SelectedTarget == combatant)
