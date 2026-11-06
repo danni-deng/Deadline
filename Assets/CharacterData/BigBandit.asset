@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
   displayName: BigBandit
   portrait: {fileID: 0}
-  maxHP: 40
-  attack: 6
-  defense: 1
-  speed: 96
+  maxHP: 50
+  attack: 9
+  defense: 5
+  speed: 98
   bulletColorA: 0
   bulletColorB: 1
   bulletsPerColor: 40
   shotsPerTurn: 5
-  extraBuildup: 3
+  extraBuildup: 7
   abilities: []
