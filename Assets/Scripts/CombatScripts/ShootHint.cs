@@ -7,12 +7,15 @@ public class ShootHint : MonoBehaviour
     public BattleManager battleManager;
     public GunMode gunMode;
     public RectTransform container;
+    public RectTransform swapGroup;
+    public Vector2 swapOffset = new Vector2(-12f, 0f);
     public Vector2 anchor = new Vector2(1f, 0f);
     public Vector2 position = new Vector2(-800f, 175f);
     public float pillWidth = 540f;
     public bool showHelpLine = false;
     public string keyLabel = "SPACE";
     public string actionLabel = "Shoot & Build Color";
+    public string noShotsLabel = "No shots left this turn";
     public string helpText = "Fill the enemy's color meter. Debuff activates when full.";
     public Color actionColor = new Color(1f, 0.86f, 0.5f);
 
@@ -56,6 +59,16 @@ public class ShootHint : MonoBehaviour
         actionText = UiBuild.Text(pill.transform, "Action", leftCenter, leftCenter, new Vector2(148f, 0f), new Vector2(pillWidth - 160f, 44f), 28f, TextAlignmentOptions.Left, actionColor, FontStyles.Bold);
         actionText.enableWordWrapping = false;
 
+        if (swapGroup != null)
+        {
+            swapGroup.SetParent(pill.transform, false);
+            swapGroup.anchorMin = new Vector2(1f, 0.5f);
+            swapGroup.anchorMax = new Vector2(1f, 0.5f);
+            swapGroup.pivot = new Vector2(1f, 0.5f);
+            swapGroup.anchoredPosition = swapOffset;
+            swapGroup.localScale = Vector3.one;
+        }
+
         if (showHelpLine)
         {
             Image helpBack = UiBuild.Panel(root, "HelpBack", topCenter, topCenter, new Vector2(0f, -64f), new Vector2(pillWidth, 40f), new Color(0.05f, 0.05f, 0.06f, 0.85f));
@@ -83,7 +96,7 @@ public class ShootHint : MonoBehaviour
         group.blocksRaycasts = canShoot;
         group.interactable = canShoot;
 
-        string next = shots > 0 ? "— " + actionLabel : "— No shots left this turn";
+        string next = shots > 0 ? "— " + actionLabel : "— " + noShotsLabel;
         if (next != lastText)
         {
             lastText = next;
