@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Deadeye Shot
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
   abilityName: Deadeye Shot
-  description: A precise shot at one enemy. 20% chance to crit for 2.5x.
+  description: Precise shot. 20% crit chance.
   target: 0
   cooldown: 2
   damagePower: 1.5

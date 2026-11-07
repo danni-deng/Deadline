@@ -13,8 +13,7 @@ MonoBehaviour:
   m_Name: Cigarette break
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
   abilityName: Cigarette break
-  description: "Lose 10% HP. An ally\u2019s cooldowns drop by 1 and they get 2 bonus
-    shots next turn."
+  description: "Lose 10% HP. Ally gets +2 shots, \u22121 cooldown."
   target: 2
   cooldown: 2
   damagePower: 0

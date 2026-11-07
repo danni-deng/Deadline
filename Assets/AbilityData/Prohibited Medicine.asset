@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Prohibited Medicine
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
   abilityName: Prohibited Medicine
-  description: Heal an ally for 20% HP and give them +40% speed for 2 turns.
+  description: Heal 20% HP. +40% speed for 2 turns.
   target: 2
   cooldown: 2
   damagePower: 0

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: molotav
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
   abilityName: Molotov
-  description: Hit every enemy for medium damage.
+  description: Hit every enemy.
   target: 1
   cooldown: 3
   damagePower: 1
