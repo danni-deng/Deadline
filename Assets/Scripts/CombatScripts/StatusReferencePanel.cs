@@ -72,7 +72,7 @@ public class StatusReferencePanel : MonoBehaviour
         collapsed = startCollapsed;
         Apply();
 
-        Debug.Log("StatusReferencePanel: built under " + canvasRect.name + ", press " + toggleKey + " or click ? to open and close it");
+        //Debug.Log("StatusReferencePanel: built under " + canvasRect.name + ", press " + toggleKey + " or click ? to open and close it");
     }
 
     void Update()

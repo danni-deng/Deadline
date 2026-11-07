@@ -18,6 +18,7 @@ public class ShootHint : MonoBehaviour
     public string noShotsLabel = "No shots left this turn";
     public string helpText = "Fill the enemy's color meter. Debuff activates when full.";
     public Color actionColor = new Color(1f, 0.86f, 0.5f);
+    public float dimmedAlpha = 0.45f;
 
     CanvasGroup group;
     TextMeshProUGUI actionText;
@@ -88,11 +89,18 @@ public class ShootHint : MonoBehaviour
 
     void Update()
     {
-        bool visible = battleManager.State == BattleState.PlayerTurn && !battleManager.IsTargetingAlly;
+        bool playerTurn = battleManager.State == BattleState.PlayerTurn;
+        bool pickingAlly = battleManager.IsTargetingAlly;
         int shots = gunMode != null ? gunMode.ShotsLeft : 0;
-        bool canShoot = visible && shots > 0;
+        bool canShoot = playerTurn && !pickingAlly && shots > 0;
 
-        group.alpha = visible ? (shots > 0 ? 1f : 0.45f) : 0f;
+        float alpha = 0f;
+        if (playerTurn)
+        {
+            alpha = (pickingAlly || shots <= 0) ? dimmedAlpha : 1f;
+        }
+
+        group.alpha = alpha;
         group.blocksRaycasts = canShoot;
         group.interactable = canShoot;
 

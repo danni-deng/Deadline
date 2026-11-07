@@ -39,7 +39,7 @@ public class ActionCard : MonoBehaviour
     public Button ability1Button;
     public Button ability2Button;
     public string attackBody = "Hit the selected enemy.";
-    public string allyPrompt = "Choose who receives it. Click a character or use the arrows, then press Enter.";
+    public string allyPromptFormat = "Choose a character to {0}. Click one or use the arrows, then press Enter.";
     public float popAmount = 0.06f;
     public float popDecay = 10f;
 
@@ -204,14 +204,20 @@ public class ActionCard : MonoBehaviour
 
         if (battleManager.IsTargetingAlly)
         {
-            title = "CHOOSE AN ALLY";
+            title = "CHOOSE A CHARACTER";
+            string verb = "buff";
             int pending = battleManager.PendingAbility;
             if (pending >= 0 && pending < user.data.abilities.Length && user.data.abilities[pending] != null)
             {
-                title = user.data.abilities[pending].abilityName.ToUpper();
+                AbilityData pendingAbility = user.data.abilities[pending];
+                title = pendingAbility.abilityName.ToUpper();
+                if (pendingAbility.healPercent > 0f)
+                {
+                    verb = "heal";
+                }
             }
 
-            body = allyPrompt;
+            body = string.Format(allyPromptFormat, verb);
             target = "";
             key = "ENTER";
         }
