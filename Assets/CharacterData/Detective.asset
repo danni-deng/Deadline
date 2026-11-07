@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
   displayName: DetectiveData
   portrait: {fileID: 0}
-  maxHP: 16
+  maxHP: 20
   attack: 9
   defense: 0
   speed: 100
@@ -22,8 +22,7 @@ MonoBehaviour:
   bulletColorB: 1
   bulletsPerColor: 40
   shotsPerTurn: 5
-  stunExtraHits: 0
-  debuffEffectiveness: 1
+  extraBuildup: 0
   abilities:
   - {fileID: 11400000, guid: dada89ee4c443bf4bacc33e44af75180, type: 2}
   - {fileID: 11400000, guid: b6a2cc7ed993d70409dfdc87cde866fb, type: 2}

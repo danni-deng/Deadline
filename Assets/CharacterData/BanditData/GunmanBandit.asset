@@ -10,18 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c70e618533d8db1479e6c4568f87670d, type: 3}
-  m_Name: Bandit
+  m_Name: GunmanBandit
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
-  displayName: 
+  displayName: Gunman
   portrait: {fileID: 0}
-  maxHP: 26
-  attack: 4
+  maxHP: 14
+  attack: 5
   defense: 0
-  speed: 95
+  speed: 110
   bulletColorA: 0
   bulletColorB: 1
   bulletsPerColor: 40
   shotsPerTurn: 5
-  stunExtraHits: 0
-  debuffEffectiveness: 1
+  extraBuildup: -1
   abilities: []

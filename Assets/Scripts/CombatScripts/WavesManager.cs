@@ -7,6 +7,7 @@ using UnityEngine;
 public class EnemyWave
 {
     public CombatantData[] enemies;
+    public float[] sizeScale;
 }
 
 public class WavesManager : MonoBehaviour
@@ -126,18 +127,24 @@ public class WavesManager : MonoBehaviour
 
         for (int i = 0; i < wave.enemies.Length && i < slots.Length; i++)
         {
-            result.Add(SpawnEnemy(wave.enemies[i], slots[i], i));
+            float scale = 1f;
+            if (wave.sizeScale != null && i < wave.sizeScale.Length && wave.sizeScale[i] > 0f)
+            {
+                scale = wave.sizeScale[i];
+            }
+
+            result.Add(SpawnEnemy(wave.enemies[i], slots[i], i, scale));
         }
 
         return result;
     }
 
-    Combatant SpawnEnemy(CombatantData data, Transform slot, int slotIndex)
+    Combatant SpawnEnemy(CombatantData data, Transform slot, int slotIndex, float scale)
     {
         GameObject go = Instantiate(banditPrefab, slot.position + Vector3.up * dropHeight, Quaternion.identity);
         spawnedCount++;
         go.name = data.displayName + " " + spawnedCount;
-        go.transform.localScale = Vector3.one;
+        go.transform.localScale = Vector3.one * scale;
 
         banditActivator activator = go.GetComponent<banditActivator>();
         if (activator != null)
