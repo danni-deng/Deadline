@@ -24,12 +24,19 @@ public class ColorSwapIndicator : MonoBehaviour
     Combatant lastUser;
     float pop;
     Vector3[] baseScales = new Vector3[2];
+    bool groupIsParent;
+    bool warned;
 
     void Awake()
     {
         for (int i = 0; i < 2; i++)
         {
             baseScales[i] = (i < chips.Length && chips[i] != null) ? chips[i].transform.localScale : Vector3.one;
+        }
+
+        if (group != null && group.transform != transform && transform.IsChildOf(group.transform))
+        {
+            groupIsParent = true;
         }
     }
 
@@ -40,14 +47,19 @@ public class ColorSwapIndicator : MonoBehaviour
             return;
         }
 
+        if (groupIsParent && !warned)
+        {
+            warned = true;
+            Debug.LogWarning("ColorSwapIndicator: Group is a parent object, so it is being ignored. Assign this object's own Canvas Group or leave it empty.");
+        }
+
         Combatant user = battleManager.ActiveCombatant;
         bool show = battleManager.State == BattleState.PlayerTurn
-            && !battleManager.IsTargetingAlly
             && user != null
             && user.isPlayerSide
             && user.data != null;
 
-        if (group != null)
+        if (group != null && !groupIsParent)
         {
             group.alpha = show ? 1f : 0f;
         }
