@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
   displayName: Runner
   portrait: {fileID: 0}
-  maxHP: 12
-  attack: 2
+  maxHP: 14
+  attack: 3
   defense: 0
-  speed: 105
+  speed: 140
   bulletColorA: 0
   bulletColorB: 1
   bulletsPerColor: 40

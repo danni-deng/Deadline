@@ -1,20 +1,65 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
+
+public class StatusPanelHover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+{
+    public bool hovering;
+    public System.Action clicked;
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        hovering = true;
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        hovering = false;
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (clicked != null)
+        {
+            clicked();
+        }
+    }
+}
 
 public class StatusReferencePanel : MonoBehaviour
 {
     public StatusIcons icons;
     public Vector2 anchor = new Vector2(1f, 1f);
-    public Vector2 offset = new Vector2(-30f, -120f);
+    public Vector2 offset = new Vector2(-30f, -190f);
     public KeyCode toggleKey = KeyCode.H;
-    public bool startCollapsed = false;
+    public bool startCollapsed = true;
+    public bool closeOnOutsideClick = true;
+    public bool closeOnEscape = true;
+    public bool pixelSnap = true;
     public int sortingOrder = 50;
     public Color panelColor = new Color(0.04f, 0.04f, 0.05f, 0.94f);
     public Color outlineColor = new Color(1f, 0.55f, 0.7f);
+    public Color attentionColor = new Color(1f, 0.85f, 0.3f);
+    public bool showColorSquares = true;
+    public float squareSize = 20f;
+    public float squareGap = 8f;
+    public float squareRightEdge = 74f;
+    public float squareYOffset = 0f;
+    public bool pulseUntilOpened = true;
+    public float pulseAmount = 0.05f;
+    public float pulseSpeed = 4f;
+    public float hoverScale = 1.08f;
+    public float scaleSpeed = 14f;
+
+    static bool seen;
 
     RectTransform panel;
     GameObject rows;
+    Image helpImage;
+    Outline panelOutline;
+    StatusPanelHover hoverHelper;
+    Canvas rootCanvas;
     bool collapsed;
 
     void Start()
@@ -27,30 +72,51 @@ public class StatusReferencePanel : MonoBehaviour
             return;
         }
 
-        RectTransform canvasRect = canvas.rootCanvas.GetComponent<RectTransform>();
+        rootCanvas = canvas.rootCanvas;
+        RectTransform canvasRect = rootCanvas.GetComponent<RectTransform>();
         Vector2 topLeft = new Vector2(0f, 1f);
         Vector2 topRight = new Vector2(1f, 1f);
         Vector2 center = new Vector2(0.5f, 0.5f);
 
         Image background = UiBuild.Panel(canvasRect, "Status Reference", anchor, anchor, offset, new Vector2(400f, 270f), panelColor);
         UiBuild.AddOutline(background, outlineColor, 3f);
+        background.raycastTarget = true;
         panel = background.rectTransform;
+        panelOutline = background.GetComponent<Outline>();
 
         Canvas own = panel.gameObject.AddComponent<Canvas>();
         own.overrideSorting = true;
         own.sortingOrder = sortingOrder;
+        own.pixelPerfect = pixelSnap;
         panel.gameObject.AddComponent<GraphicRaycaster>();
+
+        hoverHelper = panel.gameObject.AddComponent<StatusPanelHover>();
+        hoverHelper.clicked = OnPanelClicked;
 
         UiBuild.Text(panel, "Title", topLeft, topLeft, new Vector2(22f, -12f), new Vector2(290f, 40f), 30f, TextAlignmentOptions.Left, Color.white, FontStyles.Bold).text = "Status Effects";
 
         Image help = UiBuild.Panel(panel, "Help", topRight, topRight, new Vector2(-12f, -9f), new Vector2(48f, 48f), Color.white);
         help.raycastTarget = true;
+        helpImage = help;
         UiBuild.AddOutline(help, outlineColor, 2f);
         Button button = help.gameObject.AddComponent<Button>();
         button.transition = Selectable.Transition.None;
         button.onClick.AddListener(Toggle);
 
         UiBuild.Text(help.transform, "Mark", center, center, Vector2.zero, new Vector2(48f, 48f), 34f, TextAlignmentOptions.Center, Color.black, FontStyles.Bold).text = "?";
+
+        if (showColorSquares)
+        {
+            BattleColor[] squareColors = new BattleColor[] { BattleColor.Red, BattleColor.Blue, BattleColor.Yellow };
+            float top = -(33f - squareSize * 0.5f) + squareYOffset;
+
+            for (int i = 0; i < squareColors.Length; i++)
+            {
+                float x = -squareRightEdge - (squareColors.Length - 1 - i) * (squareSize + squareGap);
+                Image square = UiBuild.Panel(panel, "Color " + i, topRight, topRight, new Vector2(x, top), new Vector2(squareSize, squareSize), BattleColorUtil.ToUnityColor(squareColors[i]));
+                square.raycastTarget = false;
+            }
+        }
 
         UiBuild.Panel(panel, "Divider", topLeft, topLeft, new Vector2(22f, -62f), new Vector2(356f, 2f), outlineColor);
 
@@ -71,20 +137,81 @@ public class StatusReferencePanel : MonoBehaviour
 
         collapsed = startCollapsed;
         Apply();
-
-        //Debug.Log("StatusReferencePanel: built under " + canvasRect.name + ", press " + toggleKey + " or click ? to open and close it");
     }
 
     void Update()
     {
-        if (panel != null && Input.GetKeyDown(toggleKey))
+        if (panel == null)
+        {
+            return;
+        }
+
+        if (Input.GetKeyDown(toggleKey))
         {
             Toggle();
         }
+
+        if (!collapsed)
+        {
+            if (closeOnEscape && Input.GetKeyDown(KeyCode.Escape))
+            {
+                Toggle();
+            }
+            else if (closeOnOutsideClick && Input.GetMouseButtonDown(0) && !PointerInsidePanel())
+            {
+                Toggle();
+            }
+        }
+
+        bool hover = hoverHelper != null && hoverHelper.hovering && collapsed;
+        bool attention = pulseUntilOpened && !seen && collapsed;
+        float wave = (Mathf.Sin(Time.unscaledTime * pulseSpeed) + 1f) * 0.5f;
+
+        float target = 1f;
+        if (hover)
+        {
+            target = hoverScale;
+        }
+        else if (attention)
+        {
+            target = 1f + pulseAmount * wave;
+        }
+
+        float t = 1f - Mathf.Exp(-scaleSpeed * Time.unscaledDeltaTime);
+        panel.localScale = Vector3.Lerp(panel.localScale, Vector3.one * target, t);
+
+        float mix = hover ? 1f : (attention ? wave : 0f);
+
+        if (panelOutline != null)
+        {
+            panelOutline.effectColor = Color.Lerp(outlineColor, attentionColor, mix);
+        }
+
+        if (helpImage != null)
+        {
+            helpImage.color = Color.Lerp(Color.white, attentionColor, mix);
+        }
+    }
+
+    bool PointerInsidePanel()
+    {
+        Camera cam = null;
+        if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
+        {
+            cam = rootCanvas.worldCamera;
+        }
+
+        return RectTransformUtility.RectangleContainsScreenPoint(panel, Input.mousePosition, cam);
+    }
+
+    void OnPanelClicked()
+    {
+        Toggle();
     }
 
     void Toggle()
     {
+        seen = true;
         collapsed = !collapsed;
         Apply();
     }

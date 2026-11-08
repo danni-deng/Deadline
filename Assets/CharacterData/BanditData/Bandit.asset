@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c70e618533d8db1479e6c4568f87670d, type: 3}
   m_Name: Bandit
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
-  displayName: 
+  displayName: Bandit
   portrait: {fileID: 0}
   maxHP: 26
   attack: 4

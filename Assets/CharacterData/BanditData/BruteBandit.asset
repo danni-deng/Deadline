@@ -17,7 +17,7 @@ MonoBehaviour:
   maxHP: 38
   attack: 5
   defense: 10
-  speed: 85
+  speed: 60
   bulletColorA: 0
   bulletColorB: 1
   bulletsPerColor: 40
