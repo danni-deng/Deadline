@@ -14,13 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
   displayName: Boss Blob
   portrait: {fileID: 0}
-  maxHP: 20
-  attack: 6
-  defense: 0
+  maxHP: 130
+  attack: 9
+  defense: 4
   speed: 95
   bulletColorA: 0
   bulletColorB: 1
   bulletsPerColor: 40
   shotsPerTurn: 5
-  extraBuildup: 0
+  extraBuildup: 5
   abilities: []

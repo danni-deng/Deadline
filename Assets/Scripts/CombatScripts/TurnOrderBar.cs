@@ -5,195 +5,249 @@ using UnityEngine.UI;
 
 public class TurnOrderBar : MonoBehaviour
 {
-    class Entry
+    public BattleManager battleManager;
+    public Vector2 anchor = new Vector2(0.5f, 1f);
+    public Vector2 offset = new Vector2(0f, -30f);
+    public int count = 8;
+    public float activeSize = 84f;
+    public float cardSize = 58f;
+    public float spacing = 8f;
+    public float activeGap = 18f;
+    public float frameThickness = 3f;
+    public Color partyFrame = Color.white;
+    public Color enemyFrame = new Color(0.9f, 0.3f, 0.25f);
+    public Color cardBackground = new Color(0.05f, 0.05f, 0.06f, 0.95f);
+    public int initialLength = 2;
+    public float refreshInterval = 0.15f;
+    public float moveSpeed = 14f;
+    public int sortingOrder = 40;
+
+    class Card
     {
         public RectTransform rect;
-        public Image background;
+        public Image frame;
+        public Image back;
         public Image portrait;
-        public TMP_Text label;
-        public Outline outline;
+        public TextMeshProUGUI label;
+        public Vector2 targetPos;
+        public float targetSize;
+        public bool placed;
     }
 
-    public BattleManager battleManager;
-    public RectTransform container;
-    public int visibleCount = 6;
-    public float activeSize = 96f;
-    public float cardSize = 66f;
-    public float spacing = 10f;
-    public float gapAfterActive = 18f;
-    public Color playerColor = new Color(0.95f, 0.95f, 0.95f);
-    public Color enemyColor = new Color(0.22f, 0.22f, 0.22f);
-    public Color playerText = Color.black;
-    public Color enemyText = Color.white;
-
-    List<Entry> entries = new List<Entry>();
-    bool dirty = true;
-
-    void OnEnable()
-    {
-        if (battleManager != null)
-        {
-            battleManager.TurnStarted += OnTurnStarted;
-            battleManager.StateChanged += OnStateChanged;
-        }
-        Combatant.AnyDied += OnDied;
-    }
-
-    void OnDisable()
-    {
-        if (battleManager != null)
-        {
-            battleManager.TurnStarted -= OnTurnStarted;
-            battleManager.StateChanged -= OnStateChanged;
-        }
-        Combatant.AnyDied -= OnDied;
-    }
+    List<Card> cards = new List<Card>();
+    List<Combatant> shown = new List<Combatant>();
+    RectTransform root;
+    CanvasGroup group;
+    float timer;
 
     void Start()
     {
-        if (container == null || battleManager == null)
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas == null || battleManager == null)
         {
-            Debug.LogError("TurnOrderBar: assign the battle manager and the container");
+            Debug.LogError("TurnOrderBar: put this on the Canvas and assign the battle manager");
             enabled = false;
             return;
         }
 
-        for (int i = 0; i < visibleCount; i++)
+        root = NewRect("Turn Order", canvas.rootCanvas.transform);
+        root.anchorMin = anchor;
+        root.anchorMax = anchor;
+        root.pivot = new Vector2(0.5f, 1f);
+        root.anchoredPosition = offset;
+        root.sizeDelta = new Vector2(10f, activeSize);
+
+        Canvas own = root.gameObject.AddComponent<Canvas>();
+        own.overrideSorting = true;
+        own.sortingOrder = sortingOrder;
+        group = root.gameObject.AddComponent<CanvasGroup>();
+        group.blocksRaycasts = false;
+        group.interactable = false;
+
+        for (int i = 0; i < count; i++)
         {
-            entries.Add(CreateEntry(i));
+            cards.Add(BuildCard(i));
         }
 
         Refresh();
     }
 
-    void LateUpdate()
+    RectTransform NewRect(string name, Transform parent)
     {
-        if (dirty)
+        GameObject go = new GameObject(name, typeof(RectTransform));
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.SetParent(parent, false);
+        return rect;
+    }
+
+    void Stretch(RectTransform rect, float inset)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = new Vector2(inset, inset);
+        rect.offsetMax = new Vector2(-inset, -inset);
+    }
+
+    Card BuildCard(int index)
+    {
+        Card card = new Card();
+
+        card.rect = NewRect("Card " + index, root);
+        card.rect.anchorMin = new Vector2(0.5f, 1f);
+        card.rect.anchorMax = new Vector2(0.5f, 1f);
+        card.rect.pivot = new Vector2(0f, 1f);
+        card.rect.sizeDelta = new Vector2(cardSize, cardSize);
+
+        card.frame = card.rect.gameObject.AddComponent<Image>();
+        card.frame.raycastTarget = false;
+
+        RectTransform backRect = NewRect("Back", card.rect);
+        Stretch(backRect, frameThickness);
+        card.back = backRect.gameObject.AddComponent<Image>();
+        card.back.color = cardBackground;
+        card.back.raycastTarget = false;
+
+        RectTransform portraitRect = NewRect("Portrait", backRect);
+        Stretch(portraitRect, 0f);
+        card.portrait = portraitRect.gameObject.AddComponent<Image>();
+        card.portrait.preserveAspect = true;
+        card.portrait.raycastTarget = false;
+
+        RectTransform labelRect = NewRect("Label", backRect);
+        Stretch(labelRect, 0f);
+        card.label = labelRect.gameObject.AddComponent<TextMeshProUGUI>();
+        card.label.alignment = TextAlignmentOptions.Center;
+        card.label.fontStyle = FontStyles.Bold;
+        card.label.color = Color.white;
+        card.label.enableWordWrapping = false;
+        card.label.raycastTarget = false;
+
+        card.rect.gameObject.SetActive(false);
+        return card;
+    }
+
+    void Update()
+    {
+        if (root == null || battleManager == null)
         {
+            return;
+        }
+
+        BattleState state = battleManager.State;
+        bool show = state == BattleState.PlayerTurn || state == BattleState.Resolving;
+        group.alpha = show ? 1f : 0f;
+
+        timer += Time.unscaledDeltaTime;
+        if (timer >= refreshInterval)
+        {
+            timer = 0f;
             Refresh();
+        }
+
+        float t = 1f - Mathf.Exp(-moveSpeed * Time.unscaledDeltaTime);
+
+        foreach (Card card in cards)
+        {
+            if (!card.rect.gameObject.activeSelf)
+            {
+                continue;
+            }
+
+            if (!card.placed)
+            {
+                card.rect.anchoredPosition = card.targetPos;
+                card.rect.sizeDelta = new Vector2(card.targetSize, card.targetSize);
+                card.placed = true;
+                continue;
+            }
+
+            card.rect.anchoredPosition = Vector2.Lerp(card.rect.anchoredPosition, card.targetPos, t);
+            float size = Mathf.Lerp(card.rect.sizeDelta.x, card.targetSize, t);
+            card.rect.sizeDelta = new Vector2(size, size);
         }
     }
 
-    void OnTurnStarted(Combatant c)
+    bool SameAsShown(List<Combatant> list)
     {
-        dirty = true;
-    }
+        if (list.Count != shown.Count)
+        {
+            return false;
+        }
 
-    void OnStateChanged(BattleState state)
-    {
-        dirty = true;
-    }
+        for (int i = 0; i < list.Count; i++)
+        {
+            if (list[i] != shown[i])
+            {
+                return false;
+            }
+        }
 
-    void OnDied(Combatant c)
-    {
-        dirty = true;
-    }
-
-    void Stretch(RectTransform r)
-    {
-        r.anchorMin = Vector2.zero;
-        r.anchorMax = Vector2.one;
-        r.offsetMin = Vector2.zero;
-        r.offsetMax = Vector2.zero;
-    }
-
-    Entry CreateEntry(int index)
-    {
-        Entry e = new Entry();
-
-        GameObject root = new GameObject("TurnCard " + index, typeof(RectTransform), typeof(Image));
-        root.transform.SetParent(container, false);
-
-        e.rect = root.GetComponent<RectTransform>();
-        e.rect.anchorMin = new Vector2(0f, 1f);
-        e.rect.anchorMax = new Vector2(0f, 1f);
-        e.rect.pivot = new Vector2(0f, 1f);
-
-        e.background = root.GetComponent<Image>();
-        e.background.raycastTarget = false;
-
-        e.outline = root.AddComponent<Outline>();
-        e.outline.effectColor = Color.white;
-        e.outline.effectDistance = new Vector2(3f, -3f);
-
-        GameObject portraitObject = new GameObject("Portrait", typeof(RectTransform), typeof(Image));
-        portraitObject.transform.SetParent(root.transform, false);
-        Stretch(portraitObject.GetComponent<RectTransform>());
-        e.portrait = portraitObject.GetComponent<Image>();
-        e.portrait.raycastTarget = false;
-        e.portrait.preserveAspect = true;
-
-        GameObject labelObject = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-        labelObject.transform.SetParent(root.transform, false);
-        Stretch(labelObject.GetComponent<RectTransform>());
-        TextMeshProUGUI text = labelObject.GetComponent<TextMeshProUGUI>();
-        text.alignment = TextAlignmentOptions.Center;
-        text.enableAutoSizing = true;
-        text.fontSizeMin = 10f;
-        text.fontSizeMax = 32f;
-        text.fontStyle = FontStyles.Bold;
-        text.raycastTarget = false;
-        e.label = text;
-
-        return e;
+        return true;
     }
 
     string Initials(Combatant c)
     {
-        string baseName = c.data != null ? c.data.displayName : c.name;
-        string letters = baseName.Length > 3 ? baseName.Substring(0, 3) : baseName;
-        letters = letters.ToUpper();
-
-        if (!c.isPlayerSide)
-        {
-            string objectName = c.name;
-            int space = objectName.LastIndexOf(' ');
-            if (space >= 0 && space < objectName.Length - 1)
-            {
-                letters += objectName.Substring(space + 1);
-            }
-        }
-
-        return letters;
+        string name = c.data != null && !string.IsNullOrEmpty(c.data.displayName) ? c.data.displayName : c.name;
+        int length = Mathf.Min(initialLength, name.Length);
+        return name.Substring(0, length).ToUpper();
     }
 
     void Refresh()
     {
-        dirty = false;
+        List<Combatant> list = battleManager.GetUpcomingTurns(count);
 
-        List<Combatant> upcoming = battleManager.GetUpcomingTurns(visibleCount);
-        float y = 0f;
-
-        for (int i = 0; i < entries.Count; i++)
+        if (SameAsShown(list))
         {
-            Entry e = entries[i];
+            return;
+        }
 
-            if (i >= upcoming.Count)
+        shown = list;
+
+        float total = 0f;
+        for (int i = 0; i < list.Count; i++)
+        {
+            total += i == 0 ? activeSize : cardSize;
+            if (i > 0)
             {
-                e.rect.gameObject.SetActive(false);
+                total += i == 1 ? activeGap : spacing;
+            }
+        }
+
+        float x = -total * 0.5f;
+
+        for (int i = 0; i < cards.Count; i++)
+        {
+            Card card = cards[i];
+
+            if (i >= list.Count)
+            {
+                card.rect.gameObject.SetActive(false);
+                card.placed = false;
                 continue;
             }
 
-            e.rect.gameObject.SetActive(true);
-
-            Combatant c = upcoming[i];
+            Combatant c = list[i];
             float size = i == 0 ? activeSize : cardSize;
 
-            e.rect.sizeDelta = new Vector2(size, size);
-            e.rect.anchoredPosition = new Vector2(0f, -y);
-            y += size + (i == 0 ? gapAfterActive : spacing);
+            if (!card.rect.gameObject.activeSelf)
+            {
+                card.rect.gameObject.SetActive(true);
+                card.placed = false;
+            }
 
-            bool player = c.isPlayerSide;
-            e.background.color = player ? playerColor : enemyColor;
-            e.outline.enabled = i == 0;
+            card.targetSize = size;
+            card.targetPos = new Vector2(x, -(activeSize - size) * 0.5f);
+            x += size + (i == 0 ? activeGap : spacing);
 
-            Sprite portrait = c.data != null ? c.data.portrait : null;
-            e.portrait.sprite = portrait;
-            e.portrait.enabled = portrait != null;
+            card.frame.color = c.isPlayerSide ? partyFrame : enemyFrame;
 
-            e.label.enabled = portrait == null;
-            e.label.text = Initials(c);
-            e.label.color = player ? playerText : enemyText;
+            Sprite sprite = c.data != null ? c.data.portrait : null;
+            card.portrait.sprite = sprite;
+            card.portrait.enabled = sprite != null;
+            card.label.text = Initials(c);
+            card.label.enabled = sprite == null;
+            card.label.fontSize = size * 0.4f;
         }
     }
 }
+

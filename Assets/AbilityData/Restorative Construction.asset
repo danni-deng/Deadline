@@ -13,8 +13,7 @@ MonoBehaviour:
   m_Name: Restorative Construction
   m_EditorClassIdentifier: Assembly-CSharp::AbilityData
   abilityName: Restorative Construction
-  description: Heal an ally for 60% HP, then 10% more at the start of their next
-    3 turns.
+  description: Heal 60%, then 10% a turn for 3 turns.
   target: 2
   cooldown: 3
   damagePower: 0

@@ -487,16 +487,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnOrderBar
   battleManager: {fileID: 1092224801}
-  container: {fileID: 153015213}
-  visibleCount: 6
+  anchor: {x: 0.5, y: 1}
+  offset: {x: 0, y: -30}
+  count: 8
   activeSize: 96
   cardSize: 66
   spacing: 10
-  gapAfterActive: 18
-  playerColor: {r: 0.95, g: 0.95, b: 0.95, a: 1}
-  enemyColor: {r: 0.22, g: 0.22, b: 0.22, a: 1}
-  playerText: {r: 0, g: 0, b: 0, a: 1}
-  enemyText: {r: 1, g: 1, b: 1, a: 1}
+  activeGap: 18
+  frameThickness: 3
+  partyFrame: {r: 1, g: 1, b: 1, a: 1}
+  enemyFrame: {r: 0.9, g: 0.3, b: 0.25, a: 1}
+  cardBackground: {r: 0.05, g: 0.05, b: 0.06, a: 0.95}
+  initialLength: 2
+  refreshInterval: 0.15
+  moveSpeed: 14
+  sortingOrder: 40
 --- !u!114 &153015215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1529,7 +1534,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 12.200012, y: 838}
+  m_AnchoredPosition: {x: 12.199951, y: 838}
   m_SizeDelta: {x: 400, y: 130}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &283549863
@@ -3463,6 +3468,7 @@ GameObject:
   - component: {fileID: 615891164}
   - component: {fileID: 615891163}
   - component: {fileID: 615891165}
+  - component: {fileID: 615891166}
   m_Layer: 5
   m_Name: MenuRootCanvas
   m_TagString: Untagged
@@ -3725,6 +3731,34 @@ MonoBehaviour:
   pulseSpeed: 4
   hoverScale: 1.08
   scaleSpeed: 14
+--- !u!114 &615891166
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 615891153}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b1f675d54550ec34891101c06130d9a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TurnOrderBar
+  battleManager: {fileID: 1092224801}
+  anchor: {x: 0.5, y: 1}
+  offset: {x: 0, y: -30}
+  count: 8
+  activeSize: 84
+  cardSize: 58
+  spacing: 8
+  activeGap: 18
+  frameThickness: 3
+  partyFrame: {r: 1, g: 1, b: 1, a: 1}
+  enemyFrame: {r: 0.9, g: 0.3, b: 0.25, a: 1}
+  cardBackground: {r: 0.05, g: 0.05, b: 0.06, a: 0.95}
+  initialLength: 2
+  refreshInterval: 0.15
+  moveSpeed: 14
+  sortingOrder: 40
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -8272,7 +8306,7 @@ MonoBehaviour:
     - {fileID: 11400000, guid: f599046476d85484f96d288b8bba2d59, type: 2}
     sizeScale:
     - 0.85
-    - 1.8
+    - 1.65
     - 0.85
   startOnPlay: 1
   dropHeight: 6
