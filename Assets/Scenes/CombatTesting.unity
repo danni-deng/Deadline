@@ -3739,7 +3739,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 615891153}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b1f675d54550ec34891101c06130d9a3, type: 3}
   m_Name: 
@@ -7004,7 +7004,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActionCard
   battleManager: {fileID: 1092224801}
-  gun: {fileID: 0}
+  gun: {fileID: 1092224803}
   group: {fileID: 1047141611}
   nameText: {fileID: 160729416}
   bodyText: {fileID: 1540349466}
@@ -7016,11 +7016,13 @@ MonoBehaviour:
   attackButton: {fileID: 295541712}
   ability1Button: {fileID: 203166165}
   ability2Button: {fileID: 1139781913}
-  swapButton: {fileID: 0}
+  swapButton: {fileID: 1613120005}
   attackBodyFormat: Hit the enemy. Adds {0} {1} buildup.
   swapBody: Switch to your other bullet color.
   allyPromptFormat: Choose a character to {0}. Click one or use the arrows, then
     press Enter.
+  showOnlyOnHover: 1
+  fadeSpeed: 12
   popAmount: 0.06
   popDecay: 10
 --- !u!1 &1072788550
@@ -7330,7 +7332,7 @@ MonoBehaviour:
   battleManager: {fileID: 1092224801}
   gunSound: {fileID: 1027774484}
   colorIndicator: {fileID: 1031351131}
-  swapButton: {fileID: 0}
+  swapButton: {fileID: 1613120005}
   swapKey: 304
   buildupPerAttack: 3
   useAmmo: 1
