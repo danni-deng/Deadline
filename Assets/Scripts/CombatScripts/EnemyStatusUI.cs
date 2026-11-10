@@ -13,6 +13,7 @@ public class EnemyStatusUI : MonoBehaviour
         public Image[] images = new Image[4];
         public TextMeshProUGUI[] letters = new TextMeshProUGUI[4];
         public TextMeshProUGUI[] turns = new TextMeshProUGUI[4];
+        public int[] slotKind = new int[4];
         public int shown;
     }
 
@@ -165,6 +166,51 @@ public class EnemyStatusUI : MonoBehaviour
         }
     }
 
+    string KindName(int kind)
+    {
+        if (kind < 0)
+        {
+            return "Resistant";
+        }
+
+        return Combatant.DebuffName((BattleColor)kind);
+    }
+
+    string KindText(Combatant c, int kind)
+    {
+        if (c == null)
+        {
+            return "";
+        }
+
+        if (kind < 0)
+        {
+            return "Can't gain color buildup for " + c.resistTurns + (c.resistTurns == 1 ? " more turn." : " more turns.");
+        }
+
+        BattleColor color = (BattleColor)kind;
+        int left = c.DebuffTurns(color);
+        return Combatant.DebuffDescription(color) + "\n" + left + (left == 1 ? " turn left." : " turns left.");
+    }
+
+    Color KindColor(int kind)
+    {
+        if (kind < 0)
+        {
+            return resistColor;
+        }
+
+        return BattleColorUtil.ToUnityColor((BattleColor)kind);
+    }
+
+    void AttachMiniTip(MiniWidget m, int slot)
+    {
+        HoverTooltip tip = m.images[slot].gameObject.AddComponent<HoverTooltip>();
+        tip.getTitle = delegate { return KindName(m.slotKind[slot]); };
+        tip.getText = delegate { return KindText(m.combatant, m.slotKind[slot]); };
+        tip.getAccent = delegate { return KindColor(m.slotKind[slot]); };
+    }
+
     MiniWidget CreateMini(Combatant c)
     {
         MiniWidget m = new MiniWidget();
@@ -178,8 +224,10 @@ public class EnemyStatusUI : MonoBehaviour
         {
             TextMeshProUGUI letter;
             m.images[i] = UiBuild.Icon(m.rect, "Icon " + i, new Vector2(0.5f, 0f), center, Vector2.zero, miniIconSize, out letter);
+            m.images[i].raycastTarget = true;
             m.letters[i] = letter;
             m.turns[i] = UiBuild.Text(m.images[i].transform, "Turns", new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(0f, -2f), new Vector2(60f, 26f), 22f, TextAlignmentOptions.Center, Color.white, FontStyles.Bold);
+            AttachMiniTip(m, i);
         }
 
         return m;
@@ -252,6 +300,7 @@ public class EnemyStatusUI : MonoBehaviour
             UiBuild.ApplyDebuffIcon(m.images[slot], m.letters[slot], icons, order[i]);
             m.turns[slot].text = turns.ToString();
             m.images[slot].rectTransform.anchoredPosition = new Vector2(startX + slot * spacing, y);
+            m.slotKind[slot] = (int)order[i];
             slot++;
         }
 
@@ -259,6 +308,7 @@ public class EnemyStatusUI : MonoBehaviour
         {
             SetResistIcon(m.images[slot], m.letters[slot], m.turns[slot], c.resistTurns);
             m.images[slot].rectTransform.anchoredPosition = new Vector2(startX + slot * spacing, y);
+            m.slotKind[slot] = -1;
             slot++;
         }
 
@@ -286,6 +336,11 @@ public class EnemyStatusUI : MonoBehaviour
         UiBuild.Panel(panel, "Divider", topLeft, topLeft, new Vector2(24f, -62f), new Vector2(panelWidth - 48f, 2f), panelOutline);
 
         labelText = UiBuild.Text(panel, "Label", topLeft, topLeft, new Vector2(24f, -70f), new Vector2(330f, 32f), 26f, TextAlignmentOptions.Left, Color.white, FontStyles.Bold);
+        labelText.raycastTarget = true;
+        HoverTooltip labelTip = labelText.gameObject.AddComponent<HoverTooltip>();
+        labelTip.getTitle = delegate { return LabelTipTitle(); };
+        labelTip.getText = delegate { return LabelTipText(); };
+        labelTip.getAccent = delegate { return LabelTipColor(); };
 
         RectTransform meter = UiBuild.Box(panel, "Meter", topLeft, topLeft, new Vector2(24f, -108f), new Vector2(meterWidth, 28f));
         segments = new Image[maxSegments];
@@ -300,15 +355,28 @@ public class EnemyStatusUI : MonoBehaviour
         {
             TextMeshProUGUI letter;
             panelImages[i] = UiBuild.Icon(panel, "Debuff " + i, topRight, topRight, Vector2.zero, 44f, out letter);
+            panelImages[i].raycastTarget = true;
             panelLetters[i] = letter;
             panelTurns[i] = UiBuild.Text(panelImages[i].transform, "Turns", new Vector2(0.5f, 0f), new Vector2(0.5f, 1f), new Vector2(0f, -2f), new Vector2(60f, 26f), 22f, TextAlignmentOptions.Center, Color.white, FontStyles.Bold);
+
+            int kind = (int)order[i];
+            HoverTooltip tip = panelImages[i].gameObject.AddComponent<HoverTooltip>();
+            tip.getTitle = delegate { return KindName(kind); };
+            tip.getText = delegate { return KindText(battleManager.SelectedTarget, kind); };
+            tip.getAccent = delegate { return KindColor(kind); };
         }
 
         Image pill = UiBuild.Panel(panel, "Resist", topLeft, topLeft, new Vector2(24f, -150f), new Vector2(330f, 36f), new Color(0.15f, 0.15f, 0.17f));
+        pill.raycastTarget = true;
         resistPill = pill.gameObject;
         Vector2 leftCenter = new Vector2(0f, 0.5f);
         UiBuild.Panel(pill.transform, "Shield", leftCenter, leftCenter, new Vector2(6f, 0f), new Vector2(26f, 26f), resistColor);
         resistText = UiBuild.Text(pill.transform, "Text", leftCenter, leftCenter, new Vector2(42f, 0f), new Vector2(280f, 32f), 24f, TextAlignmentOptions.Left, Color.white, FontStyles.Bold);
+
+        HoverTooltip pillTip = resistPill.AddComponent<HoverTooltip>();
+        pillTip.getTitle = delegate { return KindName(-1); };
+        pillTip.getText = delegate { return KindText(battleManager.SelectedTarget, -1) + "\nThis starts right after a debuff triggers."; };
+        pillTip.getAccent = delegate { return resistColor; };
 
         pointer = UiBuild.Box(panel, "Pointer", new Vector2(0.5f, 0f), center, Vector2.zero, new Vector2(1f, 1f));
         Image border = UiBuild.Panel(pointer, "Border", center, center, Vector2.zero, new Vector2(34f, 34f), panelOutline);
@@ -317,6 +385,48 @@ public class EnemyStatusUI : MonoBehaviour
         inner.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
 
         panel.gameObject.SetActive(false);
+    }
+
+    string LabelTipTitle()
+    {
+        Combatant t = battleManager.SelectedTarget;
+        if (t == null)
+        {
+            return "Color Buildup";
+        }
+
+        int lead = t.LeadingBuildup();
+        return lead >= 0 ? ((BattleColor)lead).ToString() + " Buildup" : "Color Buildup";
+    }
+
+    string LabelTipText()
+    {
+        Combatant t = battleManager.SelectedTarget;
+        if (t == null)
+        {
+            return "";
+        }
+
+        int lead = t.LeadingBuildup();
+        if (lead < 0)
+        {
+            return "Hit this enemy with a color to fill its meter. A full meter triggers that color's effect.";
+        }
+
+        BattleColor color = (BattleColor)lead;
+        return "At " + t.BuildupThreshold + ", this enemy becomes " + Combatant.DebuffName(color) + ".\n" + Combatant.DebuffDescription(color);
+    }
+
+    Color LabelTipColor()
+    {
+        Combatant t = battleManager.SelectedTarget;
+        if (t == null)
+        {
+            return Color.white;
+        }
+
+        int lead = t.LeadingBuildup();
+        return lead >= 0 ? BattleColorUtil.ToUnityColor((BattleColor)lead) : Color.white;
     }
 
     void RefreshPanel()
