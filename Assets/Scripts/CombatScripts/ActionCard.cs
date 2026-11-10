@@ -27,6 +27,7 @@ public class ActionCardHover : MonoBehaviour, IPointerEnterHandler, IPointerExit
 public class ActionCard : MonoBehaviour
 {
     public BattleManager battleManager;
+    public GunMode gun;
     public CanvasGroup group;
     public TMP_Text nameText;
     public TMP_Text bodyText;
@@ -38,15 +39,21 @@ public class ActionCard : MonoBehaviour
     public Button attackButton;
     public Button ability1Button;
     public Button ability2Button;
-    public string attackBody = "Hit the selected enemy.";
+    public Button swapButton;
+    public string attackBodyFormat = "Hit the enemy. Adds {0} {1} buildup.";
+    public string swapBody = "Switch to your other bullet color.";
     public string allyPromptFormat = "Choose a character to {0}. Click one or use the arrows, then press Enter.";
+    public bool showOnlyOnHover = true;
+    public float fadeSpeed = 12f;
     public float popAmount = 0.06f;
     public float popDecay = 10f;
 
     int hovered = -1;
     bool dirty = true;
     bool subscribed;
+    bool gunSubscribed;
     float pop;
+    float targetAlpha;
     string lastContent = "";
 
     void OnEnable()
@@ -61,20 +68,30 @@ public class ActionCard : MonoBehaviour
         battleManager.AllyTargetingChanged += OnTargeting;
         Combatant.AnyStatusChanged += OnCombatant;
         subscribed = true;
+
+        if (gun != null)
+        {
+            gun.SlotChanged += OnSlot;
+            gunSubscribed = true;
+        }
     }
 
     void OnDisable()
     {
-        if (!subscribed)
+        if (subscribed)
         {
-            return;
+            battleManager.StateChanged -= OnState;
+            battleManager.TurnStarted -= OnTurn;
+            battleManager.AllyTargetingChanged -= OnTargeting;
+            Combatant.AnyStatusChanged -= OnCombatant;
+            subscribed = false;
         }
 
-        battleManager.StateChanged -= OnState;
-        battleManager.TurnStarted -= OnTurn;
-        battleManager.AllyTargetingChanged -= OnTargeting;
-        Combatant.AnyStatusChanged -= OnCombatant;
-        subscribed = false;
+        if (gunSubscribed && gun != null)
+        {
+            gun.SlotChanged -= OnSlot;
+            gunSubscribed = false;
+        }
     }
 
     void Start()
@@ -82,6 +99,14 @@ public class ActionCard : MonoBehaviour
         Hook(attackButton, 0);
         Hook(ability1Button, 1);
         Hook(ability2Button, 2);
+        Hook(swapButton, 3);
+
+        if (group != null)
+        {
+            group.blocksRaycasts = false;
+            group.interactable = false;
+            group.alpha = 0f;
+        }
     }
 
     void Hook(Button button, int index)
@@ -131,11 +156,21 @@ public class ActionCard : MonoBehaviour
         dirty = true;
     }
 
+    void OnSlot()
+    {
+        dirty = true;
+    }
+
     void Update()
     {
         if (dirty)
         {
             Refresh();
+        }
+
+        if (group != null)
+        {
+            group.alpha = Mathf.MoveTowards(group.alpha, targetAlpha, fadeSpeed * Time.unscaledDeltaTime);
         }
 
         pop = Mathf.MoveTowards(pop, 0f, popDecay * Time.unscaledDeltaTime);
@@ -176,6 +211,15 @@ public class ActionCard : MonoBehaviour
         return raw.ToUpper();
     }
 
+    string KeyLabel(KeyCode key)
+    {
+        if (key == KeyCode.LeftShift || key == KeyCode.RightShift)
+        {
+            return "SHIFT";
+        }
+        return key.ToString().ToUpper();
+    }
+
     void Refresh()
     {
         dirty = false;
@@ -186,13 +230,20 @@ public class ActionCard : MonoBehaviour
             && user.isPlayerSide
             && user.data != null;
 
-        if (group != null)
-        {
-            group.alpha = show ? 1f : 0f;
-        }
-
         if (!show)
         {
+            hovered = -1;
+            targetAlpha = 0f;
+            lastContent = "";
+            return;
+        }
+
+        bool wanted = !showOnlyOnHover || hovered >= 0 || battleManager.IsTargetingAlly;
+        targetAlpha = wanted ? 1f : 0f;
+
+        if (!wanted)
+        {
+            lastContent = "";
             return;
         }
 
@@ -221,6 +272,15 @@ public class ActionCard : MonoBehaviour
             target = "";
             key = "ENTER";
         }
+        else if (hovered == 3)
+        {
+            BattleColor current = gun != null ? gun.CurrentColor : BattleColor.Red;
+            title = "SWAP COLOR";
+            body = swapBody;
+            cooldown = "NOW: " + current.ToString().ToUpper();
+            target = Combatant.DebuffName(current).ToUpper();
+            key = gun != null ? KeyLabel(gun.swapKey) : "SHIFT";
+        }
         else
         {
             int index = hovered >= 0 ? hovered : 0;
@@ -243,8 +303,11 @@ public class ActionCard : MonoBehaviour
             }
             else
             {
+                BattleColor current = gun != null ? gun.CurrentColor : BattleColor.Red;
+                int amount = gun != null ? gun.PendingBuildup(user) : 0;
+
                 title = "ATTACK";
-                body = attackBody;
+                body = string.Format(attackBodyFormat, amount, current.ToString().ToUpper());
                 cooldown = "NO COOLDOWN";
                 target = "ONE ENEMY";
                 key = "1";

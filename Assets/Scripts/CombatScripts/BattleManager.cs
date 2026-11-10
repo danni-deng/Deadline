@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public enum BattleState
 {
@@ -45,6 +46,7 @@ public class BattleManager : MonoBehaviour
     public event Action<Combatant> AllyChanged;
     public event Action<bool> AllyTargetingChanged;
     public event Action<Combatant, Combatant, BattleAction> ActionPerformed;
+    public event Action<Combatant, Combatant> AttackResolved;
 
     bool actionSubmitted;
     BattleAction submittedAction;
@@ -338,6 +340,11 @@ public class BattleManager : MonoBehaviour
             int damage = ComputeDamage(user, target, 1f);
             target.TakeDamage(damage);
             Debug.Log(user.data.displayName + " hit " + target.name + " for " + damage + " (HP " + target.currentHP + ")");
+
+            if (user.isPlayerSide)
+            {
+                AttackResolved?.Invoke(user, target);
+            }
         }
 
         yield return new WaitForSeconds(actionDelay);
@@ -456,6 +463,10 @@ public class BattleManager : MonoBehaviour
         {
             return false;
         }
+        if (IsTargetingAlly)
+        {
+            return false;
+        }
         if (SelectedTarget == null || !SelectedTarget.IsAlive)
         {
             return false;
@@ -527,6 +538,11 @@ public class BattleManager : MonoBehaviour
     void BeginAllyTargeting(int abilityIndex)
     {
         pendingAbility = abilityIndex;
+
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
 
         if (!IsTargetingAlly)
         {
