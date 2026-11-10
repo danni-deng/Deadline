@@ -3663,10 +3663,9 @@ MonoBehaviour:
   container: {fileID: 615891157}
   swapGroup: {fileID: 869565216}
   swapOffset: {x: -32, y: 0}
-  anchor: {x: 1, y: 0}
-  position: {x: -1475, y: 45}
+  leftMargin: 65
+  bottomMargin: 13
   pillWidth: 760
-  sideMargin: 24
   showHelpLine: 0
   keyLabel: SPACE
   actionLabel: 'Shoot '
