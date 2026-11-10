@@ -3660,12 +3660,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ShootHint
   battleManager: {fileID: 1092224801}
   gunMode: {fileID: 1092224803}
-  container: {fileID: 1047141608}
+  container: {fileID: 615891157}
   swapGroup: {fileID: 869565216}
   swapOffset: {x: -32, y: 0}
   anchor: {x: 1, y: 0}
   position: {x: -1475, y: 45}
   pillWidth: 760
+  sideMargin: 24
   showHelpLine: 0
   keyLabel: SPACE
   actionLabel: 'Shoot '

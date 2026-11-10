@@ -9,9 +9,10 @@ public class ShootHint : MonoBehaviour
     public RectTransform container;
     public RectTransform swapGroup;
     public Vector2 swapOffset = new Vector2(-12f, 0f);
-    public Vector2 anchor = new Vector2(1f, 0f);
-    public Vector2 position = new Vector2(-800f, 175f);
+    public Vector2 anchor = new Vector2(0.5f, 0f);
+    public Vector2 position = new Vector2(0f, 40f);
     public float pillWidth = 540f;
+    public float sideMargin = 24f;
     public bool showHelpLine = false;
     public string keyLabel = "SPACE";
     public string actionLabel = "Shoot & Build Color";
@@ -35,12 +36,22 @@ public class ShootHint : MonoBehaviour
         }
 
         Transform parent = container != null ? container : canvas.rootCanvas.transform;
+
+        if (container != null && container.rect.width > 0f)
+        {
+            pillWidth = Mathf.Min(pillWidth, container.rect.width - sideMargin * 2f);
+        }
+
         Vector2 center = new Vector2(0.5f, 0.5f);
         Vector2 topCenter = new Vector2(0.5f, 1f);
         Vector2 leftCenter = new Vector2(0f, 0.5f);
 
         RectTransform root = UiBuild.Box(parent, "Shoot Hint", anchor, center, position, new Vector2(pillWidth, showHelpLine ? 120f : 64f));
         group = root.gameObject.AddComponent<CanvasGroup>();
+
+        LayoutElement layoutElement = root.gameObject.AddComponent<LayoutElement>();
+        layoutElement.ignoreLayout = true;
+        root.SetAsLastSibling();
 
         Image pill = UiBuild.Panel(root, "Pill", topCenter, topCenter, Vector2.zero, new Vector2(pillWidth, 60f), new Color(0.05f, 0.05f, 0.06f, 0.95f));
         pill.raycastTarget = true;
