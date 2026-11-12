@@ -2313,7 +2313,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 354794253
   m_SortingLayer: 0
-  m_SortingOrder: -1
+  m_SortingOrder: -3
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3796374519336145558, guid: 9b551ef4c2e211c4398540c907f8509c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -2407,7 +2407,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 354794253
   m_SortingLayer: 0
-  m_SortingOrder: -1
+  m_SortingOrder: -2
   m_MaskInteraction: 0
   m_Sprite: {fileID: -3796374519336145558, guid: 9b551ef4c2e211c4398540c907f8509c, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -3138,6 +3138,7 @@ GameObject:
   - component: {fileID: 549450142}
   - component: {fileID: 549450144}
   - component: {fileID: 549450145}
+  - component: {fileID: 549450146}
   m_Layer: 0
   m_Name: PlayerMini
   m_TagString: Untagged
@@ -3451,6 +3452,26 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 3.64, y: 3.16}
   m_EdgeRadius: 0
+--- !u!114 &549450146
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 549450136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f6d261228bb7c349bcf900739e92bb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterGunSprite
+  combatant: {fileID: 549450143}
+  gun: {fileID: 1092224803}
+  target: {fileID: 549450138}
+  redSprite: {fileID: -2044925137513248727, guid: 7cf5aa6c30f3b774f8ce2ffe2f10af53, type: 3}
+  blueSprite: {fileID: 0}
+  yellowSprite: {fileID: 1300915749533932587, guid: e9c64f1522680e94694d10e147223c27, type: 3}
+  anchorFeet: 0
+  reapplyEveryFrame: 0
 --- !u!1 &615891153
 GameObject:
   m_ObjectHideFlags: 0
@@ -4758,6 +4779,7 @@ GameObject:
   - component: {fileID: 849035423}
   - component: {fileID: 849035428}
   - component: {fileID: 849035429}
+  - component: {fileID: 849035430}
   m_Layer: 0
   m_Name: Flapper
   m_TagString: Untagged
@@ -4990,7 +5012,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -4629049501556285755, guid: efc0b2af40a309346839b2bd3041e275, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 721bbae8eb89bd446b48d1ba5ca01eba, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -5062,8 +5084,8 @@ BoxCollider2D:
   m_Offset: {x: 0, y: 4.685}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0}
-    oldSize: {x: 5.32, y: 9.37}
+    pivot: {x: 0.423, y: 0.2225}
+    oldSize: {x: 10, y: 20}
     newSize: {x: 3.65, y: 3.14}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -5071,6 +5093,26 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 5.32, y: 9.37}
   m_EdgeRadius: 0
+--- !u!114 &849035430
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 849035421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f6d261228bb7c349bcf900739e92bb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterGunSprite
+  combatant: {fileID: 849035425}
+  gun: {fileID: 1092224803}
+  target: {fileID: 849035427}
+  redSprite: {fileID: 21300000, guid: 721bbae8eb89bd446b48d1ba5ca01eba, type: 3}
+  blueSprite: {fileID: 21300000, guid: 460e6099563ac3241af59165777e2392, type: 3}
+  yellowSprite: {fileID: 0}
+  anchorFeet: 0
+  reapplyEveryFrame: 0
 --- !u!1 &859835363
 GameObject:
   m_ObjectHideFlags: 0
@@ -5524,6 +5566,7 @@ GameObject:
   - component: {fileID: 916774063}
   - component: {fileID: 916774062}
   - component: {fileID: 916774068}
+  - component: {fileID: 916774069}
   m_Layer: 0
   m_Name: DockMan
   m_TagString: Untagged
@@ -5837,6 +5880,26 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 8.3, y: 7.94}
   m_EdgeRadius: 0
+--- !u!114 &916774069
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 916774060}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f6d261228bb7c349bcf900739e92bb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterGunSprite
+  combatant: {fileID: 916774065}
+  gun: {fileID: 1092224803}
+  target: {fileID: 916774067}
+  redSprite: {fileID: 0}
+  blueSprite: {fileID: -4030218116691427940, guid: b6ea64b6cff71c94b96ed2a391e4a068, type: 3}
+  yellowSprite: {fileID: 6399826743555051354, guid: 26358c72ff38e8640845ea930929a47f, type: 3}
+  anchorFeet: 0
+  reapplyEveryFrame: 0
 --- !u!1 &926075331
 GameObject:
   m_ObjectHideFlags: 0
@@ -7264,6 +7327,7 @@ GameObject:
   - component: {fileID: 1092224802}
   - component: {fileID: 1092224801}
   - component: {fileID: 1092224803}
+  - component: {fileID: 1092224804}
   m_Layer: 0
   m_Name: BattleManager
   m_TagString: Untagged
@@ -7341,6 +7405,26 @@ MonoBehaviour:
   shakeTime: 0.15
   shakeAmount: 0.15
   shootTrigger: triggerFUCK
+--- !u!114 &1092224804
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1092224800}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d32df84539c7c84479cf2ede30245041, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EnemyTargetPicker
+  battleManager: {fileID: 1092224801}
+  hoverScale: 1.06
+  selectedScale: 1.03
+  scaleSpeed: 12
+  selectOnHover: 0
+  clickAgainToAttack: 0
+  respectUi: 1
+  autoAddColliders: 1
 --- !u!1 &1116229507
 GameObject:
   m_ObjectHideFlags: 0
@@ -14268,7 +14352,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_HighlightedColor: {r: 0.2924528, g: 0.2924528, b: 0.2924528, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}

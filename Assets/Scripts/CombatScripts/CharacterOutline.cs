@@ -210,6 +210,7 @@ public class CharacterOutline : MonoBehaviour
 
         Texture2D texture = original.texture;
         Rect rect = original.textureRect;
+        Vector2 trim = original.textureRectOffset;
         int x = Mathf.RoundToInt(rect.x);
         int y = Mathf.RoundToInt(rect.y);
         int w = Mathf.RoundToInt(rect.width);
@@ -238,7 +239,7 @@ public class CharacterOutline : MonoBehaviour
         readable.filterMode = texture.filterMode;
         readable.wrapMode = TextureWrapMode.Clamp;
 
-        Vector2 pivot = new Vector2(original.pivot.x / w, original.pivot.y / h);
+        Vector2 pivot = new Vector2((original.pivot.x - trim.x) / w, (original.pivot.y - trim.y) / h);
         Sprite result = Sprite.Create(readable, new Rect(0, 0, w, h), pivot, original.pixelsPerUnit);
 
         cache[original] = result;
