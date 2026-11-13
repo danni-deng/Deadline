@@ -1,5 +1,191 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+
+public static class SpriteInk
+{
+    public struct Info
+    {
+        public bool valid;
+        public int minX;
+        public int minY;
+        public int maxX;
+        public int maxY;
+        public float feetX;
+    }
+
+    static Dictionary<Sprite, Info> cache = new Dictionary<Sprite, Info>();
+
+    public static Info Get(Sprite sprite)
+    {
+        Info info = new Info();
+
+        if (sprite == null)
+        {
+            return info;
+        }
+
+        if (cache.TryGetValue(sprite, out info))
+        {
+            return info;
+        }
+
+        info = Measure(sprite);
+        cache[sprite] = info;
+        return info;
+    }
+
+    static Info Measure(Sprite sprite)
+    {
+        Info info = new Info();
+
+        Texture2D texture = sprite.texture;
+        Rect rect = sprite.rect;
+        int rx = Mathf.RoundToInt(rect.x);
+        int ry = Mathf.RoundToInt(rect.y);
+        int w = Mathf.RoundToInt(rect.width);
+        int h = Mathf.RoundToInt(rect.height);
+
+        if (texture == null || w <= 0 || h <= 0 || rx < 0 || ry < 0 || rx + w > texture.width || ry + h > texture.height)
+        {
+            return info;
+        }
+
+        RenderTexture rt = RenderTexture.GetTemporary(texture.width, texture.height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+        Graphics.Blit(texture, rt);
+
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = rt;
+
+        Texture2D readable = new Texture2D(w, h, TextureFormat.RGBA32, false);
+        readable.ReadPixels(new Rect(rx, ry, w, h), 0, 0);
+
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(rt);
+
+        Color32[] pixels = readable.GetPixels32();
+        UnityEngine.Object.Destroy(readable);
+
+        int minX = w;
+        int minY = h;
+        int maxX = -1;
+        int maxY = -1;
+
+        for (int y = 0; y < h; y++)
+        {
+            int row = y * w;
+            for (int x = 0; x < w; x++)
+            {
+                if (pixels[row + x].a > 8)
+                {
+                    if (x < minX)
+                    {
+                        minX = x;
+                    }
+                    if (x > maxX)
+                    {
+                        maxX = x;
+                    }
+                    if (y < minY)
+                    {
+                        minY = y;
+                    }
+                    if (y > maxY)
+                    {
+                        maxY = y;
+                    }
+                }
+            }
+        }
+
+        if (maxX < 0)
+        {
+            return info;
+        }
+
+        int band = Mathf.Max(2, Mathf.RoundToInt((maxY - minY) * 0.05f));
+        int bandMinX = w;
+        int bandMaxX = -1;
+
+        for (int y = minY; y <= Mathf.Min(maxY, minY + band); y++)
+        {
+            int row = y * w;
+            for (int x = 0; x < w; x++)
+            {
+                if (pixels[row + x].a > 8)
+                {
+                    if (x < bandMinX)
+                    {
+                        bandMinX = x;
+                    }
+                    if (x > bandMaxX)
+                    {
+                        bandMaxX = x;
+                    }
+                }
+            }
+        }
+
+        info.valid = true;
+        info.minX = minX;
+        info.minY = minY;
+        info.maxX = maxX;
+        info.maxY = maxY;
+        info.feetX = bandMaxX >= 0 ? (bandMinX + bandMaxX + 1) * 0.5f : (minX + maxX + 1) * 0.5f;
+        return info;
+    }
+
+    static Vector3 ToWorld(SpriteRenderer r, float px, float py)
+    {
+        Sprite sprite = r.sprite;
+        Vector2 pivot = sprite.pivot;
+        float ppu = sprite.pixelsPerUnit;
+
+        float lx = (px - pivot.x) / ppu;
+        float ly = (py - pivot.y) / ppu;
+
+        if (r.flipX)
+        {
+            lx = -lx;
+        }
+        if (r.flipY)
+        {
+            ly = -ly;
+        }
+
+        return r.transform.TransformPoint(new Vector3(lx, ly, 0f));
+    }
+
+    public static bool TryWorld(SpriteRenderer r, out Bounds bounds, out float feetX)
+    {
+        bounds = new Bounds();
+        feetX = 0f;
+
+        if (r == null || r.sprite == null)
+        {
+            return false;
+        }
+
+        Info info = Get(r.sprite);
+        if (!info.valid)
+        {
+            return false;
+        }
+
+        Vector3 a = ToWorld(r, info.minX, info.minY);
+        Vector3 b = ToWorld(r, info.maxX + 1, info.minY);
+        Vector3 c = ToWorld(r, info.minX, info.maxY + 1);
+        Vector3 d = ToWorld(r, info.maxX + 1, info.maxY + 1);
+
+        bounds = new Bounds(a, Vector3.zero);
+        bounds.Encapsulate(b);
+        bounds.Encapsulate(c);
+        bounds.Encapsulate(d);
+
+        feetX = ToWorld(r, info.feetX, info.minY).x;
+        return true;
+    }
+}
 
 public class PartyHighlight : MonoBehaviour
 {
@@ -48,9 +234,10 @@ public class PartyHighlight : MonoBehaviour
         }
     }
 
-    bool GetVisual(Combatant c, out Bounds bounds, out int minOrder, out int maxOrder, out int layerId)
+    bool GetVisual(Combatant c, out Bounds bounds, out float feetX, out int minOrder, out int maxOrder, out int layerId)
     {
         bounds = new Bounds(c.transform.position, Vector3.one);
+        feetX = c.transform.position.x;
         minOrder = 0;
         maxOrder = 0;
         layerId = 0;
@@ -61,16 +248,35 @@ public class PartyHighlight : MonoBehaviour
             return false;
         }
 
-        bounds = renderers[0].bounds;
-        minOrder = renderers[0].sortingOrder;
-        maxOrder = renderers[0].sortingOrder;
-        layerId = renderers[0].sortingLayerID;
+        bool first = true;
 
-        for (int i = 1; i < renderers.Length; i++)
+        for (int i = 0; i < renderers.Length; i++)
         {
-            bounds.Encapsulate(renderers[i].bounds);
-            minOrder = Mathf.Min(minOrder, renderers[i].sortingOrder);
-            maxOrder = Mathf.Max(maxOrder, renderers[i].sortingOrder);
+            SpriteRenderer r = renderers[i];
+            Bounds b;
+            float fx;
+
+            if (!SpriteInk.TryWorld(r, out b, out fx))
+            {
+                b = r.bounds;
+                fx = b.center.x;
+            }
+
+            if (first)
+            {
+                bounds = b;
+                feetX = fx;
+                minOrder = r.sortingOrder;
+                maxOrder = r.sortingOrder;
+                layerId = r.sortingLayerID;
+                first = false;
+            }
+            else
+            {
+                bounds.Encapsulate(b);
+                minOrder = Mathf.Min(minOrder, r.sortingOrder);
+                maxOrder = Mathf.Max(maxOrder, r.sortingOrder);
+            }
         }
 
         return true;
@@ -93,16 +299,17 @@ public class PartyHighlight : MonoBehaviour
         }
 
         Bounds bounds;
+        float feetX;
         int minOrder;
         int maxOrder;
         int layerId;
 
-        if (!GetVisual(c, out bounds, out minOrder, out maxOrder, out layerId))
+        if (!GetVisual(c, out bounds, out feetX, out minOrder, out maxOrder, out layerId))
         {
             return;
         }
 
-        activeRing.transform.position = new Vector3(bounds.center.x, bounds.min.y, c.transform.position.z);
+        activeRing.transform.position = new Vector3(feetX, bounds.min.y, c.transform.position.z);
         activeRing.sortingLayerID = layerId;
         activeRing.sortingOrder = minOrder - 1;
 
@@ -127,11 +334,12 @@ public class PartyHighlight : MonoBehaviour
         }
 
         Bounds bounds;
+        float feetX;
         int minOrder;
         int maxOrder;
         int layerId;
 
-        if (!GetVisual(c, out bounds, out minOrder, out maxOrder, out layerId))
+        if (!GetVisual(c, out bounds, out feetX, out minOrder, out maxOrder, out layerId))
         {
             return;
         }
