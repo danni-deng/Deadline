@@ -6,128 +6,87 @@ public class BulletGauge : MonoBehaviour
 {
     public BattleManager battleManager;
     public GunMode gun;
-    public CanvasGroup group;
-    public Image fill;
+    public Image fillImage;
     public TMP_Text countText;
-    public TMP_Text colorLabel;
-    public TMP_Text keyHint;
-    public Graphic[] tintWithColor;
-    public int maxBullets = 40;
-    public float emptyAlpha = 0.4f;
-    public float fillSpeed = 10f;
-    public float popAmount = 0.2f;
-    public float popDecay = 8f;
-    public bool showWhileChoosingAlly = true;
+    public bool tintToColor = true;
+    public float smoothSpeed = 8f;
+    public int overrideMax = 0;
 
-    Combatant lastUser;
-    BattleColor lastColor;
-    float pop;
-    float shownFill;
-    Vector3 baseScale = Vector3.one;
+    Combatant shown;
+    float display = -1f;
 
     void Awake()
     {
-        baseScale = transform.localScale;
-
-        if (fill != null)
+        if (fillImage != null)
         {
-            fill.type = Image.Type.Filled;
-            fill.fillMethod = Image.FillMethod.Horizontal;
+            fillImage.type = Image.Type.Filled;
+            fillImage.fillMethod = Image.FillMethod.Horizontal;
+            fillImage.fillOrigin = 0;
         }
     }
 
     void Update()
     {
-        if (battleManager == null || gun == null)
+        if (battleManager == null)
         {
             return;
         }
 
-        Combatant user = battleManager.ActiveCombatant;
-        bool show = battleManager.State == BattleState.PlayerTurn
-            && (showWhileChoosingAlly || !battleManager.IsTargetingAlly)
-            && user != null
-            && user.isPlayerSide
-            && user.data != null;
-
-        if (group != null)
+        Combatant active = battleManager.ActiveCombatant;
+        if (active != null && active.isPlayerSide && active.data != null)
         {
-            group.alpha = show ? 1f : 0f;
+            shown = active;
         }
 
-        if (!show)
+        if (shown == null && battleManager.party.Count > 0)
+        {
+            shown = battleManager.party[0];
+        }
+
+        if (shown == null || shown.data == null)
         {
             return;
         }
 
-        BattleColor color = gun.CurrentColor;
-
-        if (user != lastUser)
+        BattleColor color = shown.data.bulletColorA;
+        if (gun != null && active == shown)
         {
-            lastUser = user;
-            lastColor = color;
-            shownFill = -1f;
-        }
-        else if (color != lastColor)
-        {
-            lastColor = color;
-            pop = 1f;
+            color = gun.CurrentColor;
         }
 
-        pop = Mathf.MoveTowards(pop, 0f, popDecay * Time.unscaledDeltaTime);
+        int max = overrideMax > 0 ? overrideMax : Mathf.Max(1, shown.data.bulletsPerColor);
+        int count = shown.BulletsOf(color);
+        float target = Mathf.Clamp01((float)count / max);
 
-        int count = user.BulletsOf(color);
-        float ratio = maxBullets > 0 ? Mathf.Clamp01((float)count / maxBullets) : 0f;
-
-        if (shownFill < 0f)
+        if (display < 0f)
         {
-            shownFill = ratio;
+            display = target;
         }
         else
         {
-            shownFill = Mathf.Lerp(shownFill, ratio, 1f - Mathf.Exp(-fillSpeed * Time.unscaledDeltaTime));
+            display = Mathf.MoveTowards(display, target, smoothSpeed * Time.unscaledDeltaTime);
         }
 
         Color tint = BattleColorUtil.ToUnityColor(color);
-        tint.a = count > 0 ? 1f : emptyAlpha;
 
-        if (fill != null)
+        if (fillImage != null)
         {
-            fill.color = tint;
-            fill.fillAmount = shownFill;
+            fillImage.fillAmount = display;
+
+            if (tintToColor)
+            {
+                fillImage.color = tint;
+            }
         }
 
         if (countText != null)
         {
             countText.text = count.ToString();
-            countText.color = tint;
-        }
 
-        if (colorLabel != null)
-        {
-            colorLabel.text = color.ToString().ToUpper();
-            colorLabel.color = tint;
-        }
-
-        if (tintWithColor != null)
-        {
-            foreach (Graphic g in tintWithColor)
+            if (tintToColor)
             {
-                if (g != null)
-                {
-                    Color c = BattleColorUtil.ToUnityColor(color);
-                    c.a = g.color.a;
-                    g.color = c;
-                }
+                countText.color = tint;
             }
         }
-
-        if (keyHint != null)
-        {
-            string keyName = gun.swapKey == KeyCode.LeftShift ? "SHIFT" : gun.swapKey.ToString().ToUpper();
-            keyHint.text = "[" + keyName + "] SWAP";
-        }
-
-        transform.localScale = baseScale * (1f + popAmount * pop);
     }
 }

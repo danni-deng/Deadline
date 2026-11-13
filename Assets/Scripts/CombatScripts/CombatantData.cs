@@ -15,6 +15,7 @@ public class CombatantData : ScriptableObject
     public int bulletsPerColor = 40;
     public int shotsPerTurn = 5;
 
+    public int buildupPerAttack = 0;
     public int extraBuildup = 0;
 
     public AbilityData[] abilities = new AbilityData[0];

@@ -20,8 +20,9 @@ MonoBehaviour:
   speed: 95
   bulletColorA: 2
   bulletColorB: 1
-  bulletsPerColor: 40
+  bulletsPerColor: 20
   shotsPerTurn: 5
+  buildupPerAttack: 2
   extraBuildup: 0
   abilities:
   - {fileID: 11400000, guid: 1b51e63de57403749944d2f0c43d8dab, type: 2}

@@ -46,10 +46,19 @@ public class GunMode : MonoBehaviour
     {
     }
 
+    public int BaseBuildup(Combatant c)
+    {
+        if (c != null && c.data != null && c.data.buildupPerAttack > 0)
+        {
+            return c.data.buildupPerAttack;
+        }
+        return buildupPerAttack;
+    }
+
     public int PendingBuildup(Combatant c)
     {
         int bonus = c != null ? c.bonusShots : 0;
-        return Mathf.Max(0, buildupPerAttack + bonus);
+        return Mathf.Max(0, BaseBuildup(c) + bonus);
     }
 
     void Awake()

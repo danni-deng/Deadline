@@ -686,7 +686,7 @@ Transform:
   m_GameObject: {fileID: 134537931}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.881, y: -2.46, z: 1.3}
+  m_LocalPosition: {x: -1.48, y: -2.46, z: 1.3}
   m_LocalScale: {x: 0.88, y: 0.88, z: 0.88}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -979,10 +979,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraDrift
   battleManager: {fileID: 1092224801}
-  driftX: 0.25
+  driftX: 0.15
   driftY: 0.1
-  speed: 0.25
-  rotationSway: 0.45
+  speed: 0.2
+  rotationSway: 0.25
   actionStrength: 0.3
   fadeSpeed: 1.5
 --- !u!1 &186164199
@@ -1868,8 +1868,8 @@ RectTransform:
   - {fileID: 295541709}
   - {fileID: 1139781916}
   - {fileID: 203166162}
-  - {fileID: 2009121560}
   - {fileID: 1613120004}
+  - {fileID: 2009121560}
   m_Father: {fileID: 615891157}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
@@ -3529,7 +3529,7 @@ AudioSource:
   m_PlayOnAwake: 1
   m_Volume: 0.228
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -3696,7 +3696,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 1.58}
+  m_Offset: {x: -0.1224035, y: 1.58}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0}
@@ -3706,7 +3706,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 3.64, y: 3.16}
+  m_Size: {x: 3.3951933, y: 3.16}
   m_EdgeRadius: 0
 --- !u!114 &549450146
 MonoBehaviour:
@@ -3853,7 +3853,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 615891153}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6e1be5513a9ce88479af77856eee6f8d, type: 3}
   m_Name: 
@@ -5338,7 +5338,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 4.685}
+  m_Offset: {x: 0.53830373, y: 4.685}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.423, y: 0.2225}
@@ -5348,7 +5348,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 5.32, y: 9.37}
+  m_Size: {x: 4.740287, y: 9.37}
   m_EdgeRadius: 0
 --- !u!114 &849035430
 MonoBehaviour:
@@ -5795,18 +5795,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BulletGauge
   battleManager: {fileID: 1092224801}
   gun: {fileID: 1092224803}
-  group: {fileID: 615891160}
-  fill: {fileID: 859835367}
+  fillImage: {fileID: 859835367}
   countText: {fileID: 1009555013}
-  colorLabel: {fileID: 0}
-  keyHint: {fileID: 0}
-  tintWithColor: []
-  maxBullets: 40
-  emptyAlpha: 0.4
-  fillSpeed: 10
-  popAmount: 0.2
-  popDecay: 8
-  showWhileChoosingAlly: 1
+  tintToColor: 1
+  smoothSpeed: 8
+  overrideMax: 0
 --- !u!1 &916774060
 GameObject:
   m_ObjectHideFlags: 0
@@ -14641,7 +14634,7 @@ MonoBehaviour:
   m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
-    m_HighlightedColor: {r: 0.2924528, g: 0.2924528, b: 0.2924528, a: 1}
+    m_HighlightedColor: {r: 0.6431373, g: 0.6431373, b: 0.6431373, a: 1}
     m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
     m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
     m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
@@ -14889,7 +14882,7 @@ Transform:
   m_GameObject: {fileID: 1678107697}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.71, y: -1.74, z: -2.1}
+  m_LocalPosition: {x: -1.86, y: -1.74, z: -2.1}
   m_LocalScale: {x: 0.76, y: 0.76, z: 0.76}
   m_ConstrainProportionsScale: 0
   m_Children: []
