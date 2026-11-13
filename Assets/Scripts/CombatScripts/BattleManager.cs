@@ -28,16 +28,23 @@ public class BattleManager : MonoBehaviour
     public int damageVariance = 1;
     public bool autoStart = true;
     public bool useDebugKeys = true;
+    public bool requireEnemyPick = true;
 
     public BattleState State { get; private set; }
     public Combatant ActiveCombatant { get; private set; }
     public Combatant SelectedTarget { get; private set; }
     public Combatant SelectedAlly { get; private set; }
     public bool IsTargetingAlly { get; private set; }
+    public bool IsTargetingEnemy { get; private set; }
 
     public int PendingAbility
     {
         get { return pendingAbility; }
+    }
+
+    public int PendingEnemyAbility
+    {
+        get { return enemyPendingAbility; }
     }
 
     public event Action<BattleState> StateChanged;
@@ -45,6 +52,7 @@ public class BattleManager : MonoBehaviour
     public event Action<Combatant> TargetChanged;
     public event Action<Combatant> AllyChanged;
     public event Action<bool> AllyTargetingChanged;
+    public event Action<bool> EnemyTargetingChanged;
     public event Action<Combatant, Combatant, BattleAction> ActionPerformed;
     public event Action<Combatant, Combatant> AttackResolved;
 
@@ -52,6 +60,7 @@ public class BattleManager : MonoBehaviour
     BattleAction submittedAction;
     int submittedAbility;
     int pendingAbility = -1;
+    int enemyPendingAbility = -1;
     Combatant submittedTarget;
     Coroutine battleRoutine;
 
@@ -295,6 +304,7 @@ public class BattleManager : MonoBehaviour
     {
         actionSubmitted = false;
         EndAllyTargeting();
+        EndEnemyTargeting();
         SelectedTarget = FirstAlive(enemies);
         SelectedAlly = user;
         TargetChanged?.Invoke(SelectedTarget);
@@ -469,10 +479,26 @@ public class BattleManager : MonoBehaviour
         }
         if (SelectedTarget == null || !SelectedTarget.IsAlive)
         {
-            return false;
+            SelectedTarget = FirstAlive(enemies);
+            TargetChanged?.Invoke(SelectedTarget);
+
+            if (SelectedTarget == null)
+            {
+                return false;
+            }
+        }
+
+        bool needsPick = requireEnemyPick && GetAlive(enemies).Count > 1;
+        bool confirming = IsTargetingEnemy && enemyPendingAbility == -1;
+
+        if (needsPick && !confirming)
+        {
+            BeginEnemyTargeting(-1);
+            return true;
         }
 
         EndAllyTargeting();
+        EndEnemyTargeting();
         submittedTarget = SelectedTarget;
         submittedAction = BattleAction.Attack;
         actionSubmitted = true;
@@ -495,6 +521,24 @@ public class BattleManager : MonoBehaviour
         }
 
         AbilityData ability = user.data.abilities[abilityIndex];
+
+        bool enemyPick = ability.target == AbilityTarget.SingleEnemy
+            && requireEnemyPick
+            && GetAlive(enemies).Count > 1;
+        bool confirmingEnemy = IsTargetingEnemy && enemyPendingAbility == abilityIndex;
+
+        if (enemyPick && !confirmingEnemy)
+        {
+            if (SelectedTarget == null || !SelectedTarget.IsAlive)
+            {
+                SelectedTarget = FirstAlive(enemies);
+                TargetChanged?.Invoke(SelectedTarget);
+            }
+
+            BeginEnemyTargeting(abilityIndex);
+            return true;
+        }
+
         bool needsPick = ability.target == AbilityTarget.SingleAlly && GetAlive(party).Count > 1;
         bool confirming = IsTargetingAlly && pendingAbility == abilityIndex;
 
@@ -511,6 +555,7 @@ public class BattleManager : MonoBehaviour
         }
 
         EndAllyTargeting();
+        EndEnemyTargeting();
         submittedAction = BattleAction.Ability;
         submittedAbility = abilityIndex;
         submittedTarget = target;
@@ -537,6 +582,7 @@ public class BattleManager : MonoBehaviour
 
     void BeginAllyTargeting(int abilityIndex)
     {
+        EndEnemyTargeting();
         pendingAbility = abilityIndex;
 
         if (EventSystem.current != null)
@@ -564,6 +610,32 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    void BeginEnemyTargeting(int abilityIndex)
+    {
+        EndAllyTargeting();
+        enemyPendingAbility = abilityIndex;
+
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
+
+        IsTargetingEnemy = true;
+        EnemyTargetingChanged?.Invoke(true);
+        TargetChanged?.Invoke(SelectedTarget);
+    }
+
+    void EndEnemyTargeting()
+    {
+        enemyPendingAbility = -1;
+
+        if (IsTargetingEnemy)
+        {
+            IsTargetingEnemy = false;
+            EnemyTargetingChanged?.Invoke(false);
+        }
+    }
+
     public void CancelAllyTargeting()
     {
         if (!IsTargetingAlly)
@@ -576,11 +648,38 @@ public class BattleManager : MonoBehaviour
         AllyChanged?.Invoke(SelectedAlly);
     }
 
+    public void CancelEnemyTargeting()
+    {
+        if (!IsTargetingEnemy)
+        {
+            return;
+        }
+
+        EndEnemyTargeting();
+    }
+
     public void ConfirmAllyTarget()
     {
         if (IsTargetingAlly)
         {
             SubmitAbility(pendingAbility);
+        }
+    }
+
+    public void ConfirmEnemyTarget()
+    {
+        if (!IsTargetingEnemy)
+        {
+            return;
+        }
+
+        if (enemyPendingAbility < 0)
+        {
+            TrySubmitAttack();
+        }
+        else
+        {
+            SubmitAbility(enemyPendingAbility);
         }
     }
 
@@ -660,6 +759,12 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
+        if (Input.GetMouseButtonDown(1))
+        {
+            CancelAllyTargeting();
+            CancelEnemyTargeting();
+        }
+
         if (IsTargetingAlly)
         {
             if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.UpArrow))
@@ -677,6 +782,25 @@ public class BattleManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 CancelAllyTargeting();
+            }
+        }
+        else if (IsTargetingEnemy)
+        {
+            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                CycleTarget(1);
+            }
+            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                CycleTarget(-1);
+            }
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                ConfirmEnemyTarget();
+            }
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                CancelEnemyTargeting();
             }
         }
         else
