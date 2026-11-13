@@ -38,7 +38,7 @@ Transform:
   m_LocalEulerAnglesHint: {x: 0, y: 1, z: 0}
 --- !u!212 &4766563561154340716
 SpriteRenderer:
-  serializedVersion: 3
+  serializedVersion: 2
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -95,7 +95,6 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 1
-  m_BlendShapeWeights: []
 --- !u!114 &518330079030374991
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -109,7 +108,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   moveSpeed: 5
-  PosToDespawn: -5
+  PosToDespawn: -10
 --- !u!61 &7862038032760771898
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -308,13 +308,24 @@ public class BattleManager : MonoBehaviour
     IEnumerator Execute(Combatant user, Combatant target, BattleAction action, int abilityIndex)
     {
         SetState(BattleState.Resolving);
+<<<<<<< Updated upstream
 
         if (action == BattleAction.ColorStrike)
         {
             user.SpendChip();
         }
+=======
+        //
+>>>>>>> Stashed changes
 
         ActionPerformed?.Invoke(user, target, action);
+
+        Animator animator = user.GetComponentInChildren<Animator>();
+        if (animator != null && action != BattleAction.Attack)
+        {
+            animator.SetTrigger(user.abilityTriggerNames[abilityIndex]);
+        }
+        
 
         yield return new WaitForSeconds(actionDelay);
 
@@ -380,7 +391,13 @@ public class BattleManager : MonoBehaviour
         user.cooldowns[abilityIndex] = ability.cooldown;
         Debug.Log(user.data.displayName + " used " + ability.abilityName + " (chips " + user.chips + ")");
 
+<<<<<<< Updated upstream
         if (tier.selfDamagePercent > 0f)
+=======
+        
+
+        if (ability.selfDamagePercent > 0f)
+>>>>>>> Stashed changes
         {
             int selfDamage = Mathf.RoundToInt(user.data.maxHP * tier.selfDamagePercent);
             selfDamage = Mathf.Min(selfDamage, user.currentHP - 1);

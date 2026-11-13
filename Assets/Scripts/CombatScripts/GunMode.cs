@@ -7,12 +7,23 @@ public class GunMode : MonoBehaviour
     public colorChanger colorIndicator;
     public KeyCode fireKey = KeyCode.Space;
     public KeyCode swapKey = KeyCode.LeftShift;
+<<<<<<< Updated upstream
     public int shotDamage = 2;
     public float matchDamageMultiplier = 2f;
     public float shotCooldown = 0.4f;
     public float shakeTime = 0.15f;
     public float shakeAmount = 0.15f;
     public string shootTrigger = "triggerFUCK";
+=======
+    public int buildupPerAttack = 3;
+    public bool useAmmo = true;
+    public int maxBurst = 6;
+    public float burstSpacing = 0.12f;
+    public float shakeTime = 0.12f;
+    public float shakeAmount = 0.12f;
+    public string shootTrigger = "gunshot" +
+        "";
+>>>>>>> Stashed changes
 
     int selectedSlot;
     float nextShotTime;
@@ -170,12 +181,13 @@ public class GunMode : MonoBehaviour
 
     void PlayShotEffects(Combatant shooter)
     {
+        
         Animator animator = shooter.GetComponentInChildren<Animator>();
         if (animator != null && HasTrigger(animator, shootTrigger))
         {
             animator.SetTrigger(shootTrigger);
         }
-
+        
         if (cameraShake != null)
         {
             cameraShake.shakeDuration = shakeTime;

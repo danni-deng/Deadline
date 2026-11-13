@@ -42,6 +42,39 @@ public class Combatant : MonoBehaviour
     public int[] cooldowns = new int[0];
     public List<StatusEffect> effects = new List<StatusEffect>();
 
+<<<<<<< Updated upstream
+=======
+    public string[] abilityTriggerNames = { "ability1", "ability2" };
+    public string gunshotTriggerName = "gunshot";
+    public string attackTriggerName = "attack";
+
+    public static string DebuffName(BattleColor color)
+    {
+        if (color == BattleColor.Red)
+        {
+            return "Vulnerable";
+        }
+        if (color == BattleColor.Yellow)
+        {
+            return "Interrupted";
+        }
+        return "Weakened";
+    }
+
+    public static string DebuffDescription(BattleColor color)
+    {
+        if (color == BattleColor.Red)
+        {
+            return "Takes increased damage.";
+        }
+        if (color == BattleColor.Yellow)
+        {
+            return "Next attack is delayed.";
+        }
+        return "Deals reduced damage.";
+    }
+
+>>>>>>> Stashed changes
     public bool IsAlive
     {
         get { return currentHP > 0; }
