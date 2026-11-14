@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02f35027a4259bf46a18331872eb6748, type: 3}
   m_Name: StatusIcons
   m_EditorClassIdentifier: Assembly-CSharp::StatusIcons
-  vulnerable: {fileID: 0}
-  weakened: {fileID: 0}
-  interrupted: {fileID: 0}
+  vulnerable: {fileID: 5588661754272856354, guid: a045e5704f1b64f9880746454a65da5b, type: 3}
+  weakened: {fileID: 376139206267398921, guid: e5988683c8af64345872c2b092fa5bd4, type: 3}
+  interrupted: {fileID: 4560959632785456268, guid: 6ff9ea0bcb51c4b4bba2570591ce3814, type: 3}
   resistant: {fileID: 0}
