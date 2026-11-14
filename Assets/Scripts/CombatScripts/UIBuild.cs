@@ -51,11 +51,21 @@ public static class UiBuild
     public static Image Icon(Transform parent, string name, Vector2 anchor, Vector2 pivot, Vector2 position, float size, out TextMeshProUGUI letter)
     {
         Image image = Panel(parent, name, anchor, pivot, position, new Vector2(size, size), Color.gray);
+        image.preserveAspect = true;
         AddOutline(image, Color.white, 2f);
 
         Vector2 center = new Vector2(0.5f, 0.5f);
         letter = Text(image.transform, "Letter", center, center, Vector2.zero, new Vector2(size, size), size * 0.6f, TextAlignmentOptions.Center, Color.white, FontStyles.Bold);
         return image;
+    }
+
+    public static void SetOutline(Image image, bool on)
+    {
+        Outline outline = image.GetComponent<Outline>();
+        if (outline != null)
+        {
+            outline.enabled = on;
+        }
     }
 
     public static void ApplyDebuffIcon(Image image, TMP_Text letter, StatusIcons icons, BattleColor color)
@@ -67,6 +77,7 @@ public static class UiBuild
             image.sprite = sprite;
             image.color = Color.white;
             letter.text = "";
+            SetOutline(image, false);
         }
         else
         {
@@ -74,6 +85,7 @@ public static class UiBuild
             image.color = BattleColorUtil.ToUnityColor(color);
             letter.text = Combatant.DebuffName(color).Substring(0, 1);
             letter.color = color == BattleColor.Yellow ? Color.black : Color.white;
+            SetOutline(image, true);
         }
     }
 }
