@@ -415,16 +415,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TurnOrderBar
   battleManager: {fileID: 1092224801}
-  container: {fileID: 153015213}
-  visibleCount: 6
+  anchor: {x: 0.5, y: 1}
+  offset: {x: 0, y: -30}
+  count: 8
   activeSize: 96
   cardSize: 66
   spacing: 10
-  gapAfterActive: 18
-  playerColor: {r: 0.95, g: 0.95, b: 0.95, a: 1}
-  enemyColor: {r: 0.22, g: 0.22, b: 0.22, a: 1}
-  playerText: {r: 0, g: 0, b: 0, a: 1}
-  enemyText: {r: 1, g: 1, b: 1, a: 1}
+  activeGap: 18
+  frameThickness: 3
+  partyFrame: {r: 1, g: 1, b: 1, a: 1}
+  enemyFrame: {r: 0.9, g: 0.3, b: 0.25, a: 1}
+  cardBackground: {r: 0.05, g: 0.05, b: 0.06, a: 0.95}
+  initialLength: 2
+  refreshInterval: 0.15
+  moveSpeed: 14
+  sortingOrder: 40
 --- !u!114 &153015215
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2858,6 +2863,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActionCard
   battleManager: {fileID: 1092224801}
+  gun: {fileID: 0}
   group: {fileID: 470168742}
   nameText: {fileID: 299120610}
   bodyText: {fileID: 1451334270}
@@ -2869,9 +2875,13 @@ MonoBehaviour:
   attackButton: {fileID: 295541712}
   ability1Button: {fileID: 203166165}
   ability2Button: {fileID: 1139781913}
-  attackBody: Hit the selected enemy.
-  allyPrompt: Choose who receives it. Click a character or use the arrows, then press
-    Enter.
+  swapButton: {fileID: 0}
+  attackBodyFormat: Hit the enemy. Adds {0} {1} buildup.
+  swapBody: Switch to your other bullet color.
+  allyPromptFormat: Choose a character to {0}. Click one or use the arrows, then
+    press Enter.
+  showOnlyOnHover: 1
+  fadeSpeed: 12
   popAmount: 0.06
   popDecay: 10
 --- !u!225 &470168742
@@ -3789,8 +3799,8 @@ MonoBehaviour:
   container: {fileID: 615891157}
   swapGroup: {fileID: 869565216}
   swapOffset: {x: -32, y: 0}
-  anchor: {x: 1, y: 0}
-  position: {x: -750, y: 62}
+  leftMargin: 65
+  bottomMargin: 13
   pillWidth: 760
   showHelpLine: 0
   keyLabel: SPACE
@@ -3798,6 +3808,7 @@ MonoBehaviour:
   noShotsLabel: 'No shots left '
   helpText: Fill the enemy's color meter. Debuff activates when full.
   actionColor: {r: 1, g: 0.86, b: 0.5, a: 1}
+  dimmedAlpha: 0.45
 --- !u!114 &615891164
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3839,9 +3850,23 @@ MonoBehaviour:
   offset: {x: -30, y: -100}
   toggleKey: 104
   startCollapsed: 1
+  closeOnOutsideClick: 1
+  closeOnEscape: 1
+  pixelSnap: 1
   sortingOrder: 50
   panelColor: {r: 0.04, g: 0.04, b: 0.05, a: 0.94}
   outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  attentionColor: {r: 1, g: 0.85, b: 0.3, a: 1}
+  showColorSquares: 1
+  squareSize: 20
+  squareGap: 8
+  squareRightEdge: 74
+  squareYOffset: 0
+  pulseUntilOpened: 1
+  pulseAmount: 0.05
+  pulseSpeed: 4
+  hoverScale: 1.08
+  scaleSpeed: 14
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -6208,6 +6233,7 @@ MonoBehaviour:
   damageVariance: 1
   autoStart: 0
   useDebugKeys: 1
+  requireEnemyPick: 1
 --- !u!4 &1092224802
 Transform:
   m_ObjectHideFlags: 0
@@ -6238,13 +6264,12 @@ MonoBehaviour:
   battleManager: {fileID: 1092224801}
   gunSound: {fileID: 1027774484}
   colorIndicator: {fileID: 1031351131}
-  shotsText: {fileID: 0}
-  shootButton: {fileID: 0}
   swapButton: {fileID: 0}
-  fireKey: 32
   swapKey: 304
-  shotDamage: 1
-  shotCooldown: 0.15
+  buildupPerAttack: 3
+  useAmmo: 1
+  maxBurst: 6
+  burstSpacing: 0.12
   shakeTime: 0.15
   shakeAmount: 0.15
   shootTrigger: triggerFUCK

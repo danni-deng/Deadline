@@ -15,7 +15,12 @@ public class BattleResultScreen : MonoBehaviour
     public float showDelay = 1.2f;
     public float fadeTime = 0.5f;
 
+    public LevelChanger levelChanger;
+    public bool autoAdvance = true;
+    public float autoAdvanceDelay = 2.5f;
+
     bool shown;
+    bool advancing;
 
     void OnEnable()
     {
@@ -48,8 +53,9 @@ public class BattleResultScreen : MonoBehaviour
         }
         if (nextLevelButton != null)
         {
-            nextLevelButton.onClick.AddListener(NextLevel);
-            nextLevelButton.gameObject.SetActive(!string.IsNullOrEmpty(nextSceneName));
+            nextLevelButton.onClick.AddListener(AdvanceLevel);
+            bool canAdvance = levelChanger != null || !string.IsNullOrEmpty(nextSceneName);
+            nextLevelButton.gameObject.SetActive(canAdvance && !autoAdvance);
         }
     }
 
@@ -75,47 +81,91 @@ public class BattleResultScreen : MonoBehaviour
         if (state == BattleState.Won)
         {
             shown = true;
-            StartCoroutine(Show(winGroup));
+            StartCoroutine(Show(winGroup, true));
         }
         else if (state == BattleState.Lost)
         {
             shown = true;
-            StartCoroutine(Show(loseGroup));
+            StartCoroutine(Show(loseGroup, false));
         }
     }
 
-    IEnumerator Show(CanvasGroup group)
+    IEnumerator Show(CanvasGroup group, bool won)
     {
-        if (group == null)
+        if (group != null)
         {
-            yield break;
+            yield return new WaitForSecondsRealtime(showDelay);
+
+            float elapsed = 0f;
+            while (elapsed < fadeTime)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                group.alpha = Mathf.Clamp01(elapsed / fadeTime);
+                yield return null;
+            }
+
+            group.alpha = 1f;
+            group.interactable = true;
+            group.blocksRaycasts = true;
+        }
+        else if (won)
+        {
+            yield return new WaitForSecondsRealtime(showDelay);
         }
 
-        yield return new WaitForSecondsRealtime(showDelay);
-
-        float elapsed = 0f;
-        while (elapsed < fadeTime)
+        if (won && autoAdvance)
         {
-            elapsed += Time.unscaledDeltaTime;
-            group.alpha = Mathf.Clamp01(elapsed / fadeTime);
-            yield return null;
+            yield return new WaitForSecondsRealtime(autoAdvanceDelay);
+            AdvanceLevel();
         }
-
-        group.alpha = 1f;
-        group.interactable = true;
-        group.blocksRaycasts = true;
     }
 
     void Retry()
     {
+        if (advancing)
+        {
+            return;
+        }
+
+        Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
-    void NextLevel()
+    void AdvanceLevel()
     {
+        if (advancing)
+        {
+            return;
+        }
+
+        advancing = true;
+
+        if (levelChanger != null)
+        {
+            if (!string.IsNullOrEmpty(nextSceneName))
+            {
+                levelChanger.FadeToScene(nextSceneName);
+            }
+            else
+            {
+                levelChanger.FadeToNextLevel();
+            }
+            return;
+        }
+
+        Time.timeScale = 1f;
+
         if (!string.IsNullOrEmpty(nextSceneName))
         {
             SceneManager.LoadScene(nextSceneName);
+            return;
         }
+
+        int next = SceneManager.GetActiveScene().buildIndex + 1;
+        if (next >= SceneManager.sceneCountInBuildSettings)
+        {
+            next = 0;
+        }
+        SceneManager.LoadScene(next);
     }
 }
