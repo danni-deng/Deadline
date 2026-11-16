@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatantData
   displayName: Gunman
   portrait: {fileID: 0}
-  maxHP: 14
+  maxHP: 15
   attack: 5
   defense: 0
   speed: 110
@@ -22,5 +22,6 @@ MonoBehaviour:
   bulletColorB: 1
   bulletsPerColor: 40
   shotsPerTurn: 5
+  buildupPerAttack: 0
   extraBuildup: -1
   abilities: []
