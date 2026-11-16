@@ -17,10 +17,11 @@ MonoBehaviour:
   maxHP: 14
   attack: 3
   defense: 0
-  speed: 140
+  speed: 115
   bulletColorA: 0
   bulletColorB: 1
   bulletsPerColor: 40
   shotsPerTurn: 5
+  buildupPerAttack: 0
   extraBuildup: -2
   abilities: []
