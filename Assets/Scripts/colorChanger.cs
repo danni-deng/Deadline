@@ -2,41 +2,36 @@ using UnityEngine;
 
 public class colorChanger : MonoBehaviour
 {
+
     public Sprite[] sprites = new Sprite[3];
     int colorSelected = 0;
-    string[] colorName = new string[] { "red", "yellow", "blue" };
+    string[] colorName = new string[3];
+    
+
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+        colorName = new string[] { "red", "yellow", "blue" };
+    }
 
     public string getColor()
     {
         return colorName[colorSelected];
     }
 
-    public void SetColor(int index)
+    // Update is called once per frame
+    void Update()
     {
-        colorSelected = Mathf.Clamp(index, 0, colorName.Length - 1);
-        Apply();
-    }
+        GetComponent<SpriteRenderer>().sprite = sprites[colorSelected];
 
-    public void PlaySwitchSound()
-    {
-        AudioSource sound = GetComponent<AudioSource>();
-        if (sound != null)
+        if (Input.GetKeyDown(KeyCode.LeftShift))
         {
-            sound.Play();
+            GetComponent<AudioSource>().Play();
+            colorSelected++;
         }
-    }
-
-    void Start()
-    {
-        Apply();
-    }
-
-    void Apply()
-    {
-        SpriteRenderer sr = GetComponent<SpriteRenderer>();
-        if (sr != null && colorSelected < sprites.Length && sprites[colorSelected] != null)
+        if(colorSelected > 2)
         {
-            sr.sprite = sprites[colorSelected];
+            colorSelected = 0;
         }
     }
 }
