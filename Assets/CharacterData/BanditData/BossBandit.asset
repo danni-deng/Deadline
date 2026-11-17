@@ -15,12 +15,13 @@ MonoBehaviour:
   displayName: Boss Blob
   portrait: {fileID: 0}
   maxHP: 130
-  attack: 9
+  attack: 11
   defense: 4
   speed: 95
   bulletColorA: 0
   bulletColorB: 1
   bulletsPerColor: 40
   shotsPerTurn: 5
+  buildupPerAttack: 0
   extraBuildup: 5
   abilities: []

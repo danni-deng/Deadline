@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Runner
   portrait: {fileID: 0}
   maxHP: 14
-  attack: 3
+  attack: 2
   defense: 0
   speed: 115
   bulletColorA: 0
